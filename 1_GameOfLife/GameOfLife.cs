@@ -22,7 +22,7 @@
             {
                 for (int column = 0; column < Width; column++)
                 {
-                    _cells[row, column] = Random.Shared.Next(4) == 0;
+                    _cells[row, column] = Random.Shared.Next(GameConstants.InitialCellChoices) == GameConstants.InitialAliveOutcome;
                 }
             }
         }
@@ -39,7 +39,7 @@
                 for (int column = 0; column < Width; column++)
                 {
                     int neighbors = CountLivingNeighbors(row, column);
-                    next[row, column] = neighbors == 3 || (_cells[row, column] && neighbors == 2);
+                    next[row, column] = neighbors == GameConstants.NeighborsToBecomeAlive || (_cells[row, column] && neighbors == GameConstants.NeighborsToStayAlive);
                 }
 
             _cells = next;
