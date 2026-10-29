@@ -80,6 +80,8 @@ namespace GameOfLife_Console
                         Console.WriteLine($"Conway's Game of Life |");
                         Console.WriteLine($"Iteration: {game.Iteration} | Living cells: {game.LivingCells}");
                         Console.WriteLine("S = save | Q = quit");
+                        // To show the message that the game is saved
+                        Console.WriteLine(message.PadRight(70));
 
                         for (int row = 0; row < game.Height; row++)
                         {
