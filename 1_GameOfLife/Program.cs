@@ -1,52 +1,134 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Runtime.InteropServices.Marshalling;
+using System.Text;
+using GameOfLife.Core;
 
-namespace GameOfLife
+namespace GameOfLife_Console
 {
     public class Program
     {
         static async Task Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
+            var store = new SaveGameOfLifeProgress();
+            const string saveFilePath = "game_of_life_save.json";
 
-            Console.WriteLine("Conway's Game of Life");
-            Console.WriteLine("1. Small field (10x10)");
-            Console.WriteLine("2. Medium field (20x20)");
-            Console.WriteLine("3. Custom field size");
+            GameOfLife.Core.GameOfLife game;
 
-            int option = ReadNumber("Choose an option (1-3) :", 1, 3);
-
-            int width = option switch
+            // First menu to choose the field size or load a saved game
+            while (true)
             {
-                1 => 10,
-                2 => 20,
-                _ => ReadNumber("Enter the width of the field (5-35):", 5, 35)
-            };
-
-            int height = option switch
-            {
-                1 => 10,
-                2 => 20,
-                _ => ReadNumber("Enter the height of the field (5-20):", 5, 20)
-            };
-
-            var game = new GameOfLife(width, height);
-            game.GridRandomizer();
-
-            while(true)
-            {
-                Console.Clear();
                 Console.WriteLine("Conway's Game of Life");
-                for(int row = 0; row < game.Height; row++)
+                Console.WriteLine("1. Small field (10x10)");
+                Console.WriteLine("2. Medium field (20x20)");
+                Console.WriteLine("3. Custom field size");
+
+                int option = ReadNumber("Choose an option (0-4) :", 0, 4);
+
+                if (option == 0)
+                    return;
+
+                if (option == 4)
                 {
-                    for(int column = 0; column < game.Width; column++)
+                    try
                     {
-                        Console.Write(game.IsAlive(row, column) ? "██" : "  ");
+                        game = await store.LoadAsync(saveFilePath);
+                        break;
                     }
-                    Console.WriteLine();
+                    catch (Exception ex) when (ex is FileNotFoundException or InvalidDataException)
+                    {
+                        Console.WriteLine($"Failed to load the game: {ex.Message}");
+                        Console.WriteLine("Starting a new game instead.");
+                        continue;
+                    }
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(1));
-                game.NextGeneration();
+                int width = option switch
+                {
+                    1 => 10,
+                    2 => 20,
+                    _ => ReadNumber("Enter the width of the field (5-35):", 5, 35)
+                };
+
+                int height = option switch
+                {
+                    1 => 10,
+                    2 => 20,
+                    _ => ReadNumber("Enter the height of the field (5-20):", 5, 20)
+                };
+
+                game = new GameOfLife.Core.GameOfLife(width, height);
+                game.GridRandomizer();
+                break;
+            }
+
+            Console.Clear();
+            string message = "";
+
+            try
+            {
+                var clock = Stopwatch.StartNew();
+                var nextTick = clock.Elapsed + TimeSpan.FromSeconds(1);
+                bool redraw = true;
+
+                // Main loop to update the game state and handle user input
+                while (true)
+                {
+                    if (redraw)
+                    {
+                        Console.SetCursorPosition(0, 0);
+                        Console.WriteLine($"Conway's Game of Life |");
+                        Console.WriteLine($"Iteration: {game.Iteration} | Living cells: {game.LivingCells}");
+                        Console.WriteLine("S = save | Q = quit");
+
+                        for (int row = 0; row < game.Height; row++)
+                        {
+                            for (int column = 0; column < game.Width; column++)
+                            {
+                                Console.Write(game.IsAlive(row, column) ? "██" : "  ");
+                            }
+                            Console.WriteLine();
+                        }
+                        redraw = false;
+                    }
+
+                    // Handle user input without blocking the game loop
+                    while(Console.KeyAvailable)
+                    {
+                        ConsoleKey key = Console.ReadKey(intercept: true).Key;
+                        
+                        if(key is ConsoleKey.Q or ConsoleKey.Escape)
+                            return;
+
+                        if (key == ConsoleKey.S)
+                        {
+                            try
+                            {
+                                await store.SaveAsync(saveFilePath, game);
+                                message = $"Saved to {saveFilePath}.";
+                            }
+                            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                            {
+                                message = $"Save failed: {ex.Message}";
+                            }
+                            redraw = true;
+                        }
+                    }
+
+                    if(clock.Elapsed >= nextTick)
+                    {
+                        game.NextGeneration();
+                        nextTick += TimeSpan.FromSeconds(1);
+                        
+                        if(nextTick <= clock.Elapsed)
+                            nextTick = clock.Elapsed + TimeSpan.FromSeconds(1);
+                        redraw = true;
+                    }
+                }
+            }
+            finally
+            {
+                Console.Clear();
             }
 
             // Local function to read a number from the console with validation

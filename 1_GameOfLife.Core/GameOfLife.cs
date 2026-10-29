@@ -1,11 +1,14 @@
-﻿namespace GameOfLife
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace GameOfLife.Core
 {
     public class GameOfLife
     {
         private bool[,] _cells;
         public int Width { get; }
         public int Height { get; }
-
+        public long Iteration { get; set; }
+        public int LivingCells { get; set; }
 
         // Initialize the game with a given width and height
         public GameOfLife(int width, int height)
@@ -27,6 +30,14 @@
             }
         }
 
+        public GameOfLife(int width, int height, long iteration)
+        {
+            Width = width;
+            Height = height;
+            Iteration = iteration;
+            _cells = new bool[height, width];
+        }
+
         // Lamda expression to check if a cell is alive
         public bool IsAlive(int row, int column) => _cells[row, column];
 
@@ -34,15 +45,56 @@
         public void NextGeneration()
         {
             var next = new bool[Height, Width];
+            int living = 0;
 
             for (int row = 0; row < Height; row++)
                 for (int column = 0; column < Width; column++)
                 {
                     int neighbors = CountLivingNeighbors(row, column);
-                    next[row, column] = neighbors == GameConstants.NeighborsToBecomeAlive || (_cells[row, column] && neighbors == GameConstants.NeighborsToStayAlive);
+
+                    next[row, column] = neighbors == GameConstants.NeighborsToBecomeAlive || (_cells[row, column] && neighbors == GameConstants.NeighborsToStayAlive); ;
+
+                    if (next[row, column])
+                        living++;
                 }
 
             _cells = next;
+            LivingCells = living;
+            Iteration++;
+        }
+
+        public GameState ToState()
+        {
+            var cells = new bool[Height * Width];
+            for(int row = 0; row < Height; row++)
+            {
+                for(int column = 0; column < Width; column++)
+                {
+                    cells[row * Width + column] = _cells[row, column];
+                }
+            }
+            return new GameState(Width, Height, Iteration, cells);
+        }
+
+        public static GameOfLife FromState(GameState state)
+        {
+            if(state is null || state.Width is < 1 or > 35 || state.Height is < 1 or > 20 
+                || state.Iteration < 0 || state.Cells is null || state.Cells.Length != state.Width * state.Height)
+                throw new ArgumentException("Invalid game state.");
+
+            var game = new GameOfLife(state.Width, state.Height, state.Iteration);
+            for (int row = 0; row < game.Height; row++)
+            {
+                for (int column = 0; column < game.Width; column++)
+                {
+                    bool alive = state.Cells[row * game.Width + column];
+                    game._cells[row, column] = alive;
+
+                    if (alive) 
+                        game.LivingCells++;
+                }
+            }
+            return game;
         }
 
         // Count the number of living neighbors for a given cell

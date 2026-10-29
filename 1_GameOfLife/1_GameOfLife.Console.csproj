@@ -8,4 +8,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\1_GameOfLife.Core\1_GameOfLife.Core.csproj" />
+  </ItemGroup>
+
 </Project>
