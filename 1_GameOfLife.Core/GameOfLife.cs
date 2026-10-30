@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace GameOfLife.Core
+﻿namespace GameOfLife.Core
 {
     public class GameOfLife
     {
@@ -30,6 +28,7 @@ namespace GameOfLife.Core
             }
         }
 
+        // Initialize GameOfLife overloading with width, height and iteration
         public GameOfLife(int width, int height, long iteration)
         {
             Width = width;
@@ -63,6 +62,7 @@ namespace GameOfLife.Core
             Iteration++;
         }
 
+        // Create a GameState object from the current state of the game
         public GameState ToState()
         {
             var cells = new bool[Height * Width];
@@ -76,9 +76,10 @@ namespace GameOfLife.Core
             return new GameState(Width, Height, Iteration, cells);
         }
 
+        // Create a GameOfLife object from a given GameState object
         public static GameOfLife FromState(GameState state)
         {
-            if(state is null || state.Width is < 1 or > 35 || state.Height is < 1 or > 20 
+            if (state is null || state.Width is < 1 or > GameConstants.MaximumWidth || state.Height is < 1 or > GameConstants.MaximumHeight
                 || state.Iteration < 0 || state.Cells is null || state.Cells.Length != state.Width * state.Height)
                 throw new ArgumentException("Invalid game state.");
 
