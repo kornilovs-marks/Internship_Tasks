@@ -4,16 +4,20 @@ namespace GameOfLife.Core
 {
     public class SaveGameOfLifeProgress
     {
-        // Save the game state to a file. Defaults to Core root directory
-        public async Task SaveAsync(string path, GameOfLife game)
+        // Save the game session to a file in JSON format. Defaults to Core root directory
+        public async Task SaveAsync(string path, GameSession session)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(path);
+            ArgumentNullException.ThrowIfNull(session);
+
+            GameSessionState state = session.ToState();
             string fullPath = Path.GetFullPath(path);
             string temporaryPath = fullPath + ".tmp";
 
             try
             {
                 await using (var stream = File.Create(temporaryPath))
-                    await JsonSerializer.SerializeAsync(stream, game.ToState());
+                    await JsonSerializer.SerializeAsync(stream, state);
 
                 File.Move(temporaryPath, fullPath, overwrite: true);
             }
@@ -24,16 +28,16 @@ namespace GameOfLife.Core
             }
         }
 
-        // Load the game state from a file and return a new GameOfLife instance
-        public async Task<GameOfLife> LoadAsync(string path)
+        // Load the game session from a file and returns GameSession object
+        public async Task<GameSession> LoadAsync(string path)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
             await using var stream = File.OpenRead(path);
-            var state = await JsonSerializer.DeserializeAsync<GameState>(stream) ??
+            var state = await JsonSerializer.DeserializeAsync<GameSessionState>(stream) ??
                 throw new InvalidDataException("The file does not contain a valid game state.");
 
-            return GameOfLife.FromState(state);
+            return GameSession.FromState(state);
         }
     }
 }
