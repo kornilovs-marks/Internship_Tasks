@@ -2,7 +2,8 @@
 {
     public class GameSession
     {
-        private GameOfLife[] _games;
+        private readonly GameOfLife[] _games;
+        public IReadOnlyList<GameOfLife> Games => _games;
         private object _gate = new();
         public int GameCount => _games.Length;
 
