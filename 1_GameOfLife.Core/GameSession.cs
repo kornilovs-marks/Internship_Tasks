@@ -18,7 +18,7 @@
         // Create a new GameSession with random games
         public static GameSession CreateRandom(int gameCount, int width, int height)
         {
-            if (gameCount is < 1 or > GameConstants.MaximumGames)
+            if (gameCount is < GameConstants.MinimumGames or > GameConstants.MaximumGames)
                 throw new ArgumentOutOfRangeException(nameof(gameCount));
 
             var games = new GameOfLife[gameCount];
@@ -90,7 +90,7 @@
         public static GameSession FromState(GameSessionState state)
         {
             if (state is null || state.Version != 1 || state.Games is null ||
-                state.Games.Length is < 1 or > GameConstants.MaximumGames)
+                state.Games.Length is < GameConstants.MinimumGames or > GameConstants.MaximumGames)
                 throw new InvalidDataException("Invalid or unsupported game session.");
 
             var games = new GameOfLife[state.Games.Length];
