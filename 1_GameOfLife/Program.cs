@@ -13,7 +13,7 @@ namespace GameOfLife_Console
             var store = new SaveGameOfLifeProgress();
             const string saveFilePath = "game_of_life_save.json";
 
-            GameOfLife.Core.GameOfLife game;
+            GameSession session;
 
             // First menu to choose the field size or load a saved game
             while (true)
@@ -34,13 +34,18 @@ namespace GameOfLife_Console
                 {
                     try
                     {
-                        game = await store.LoadAsync(saveFilePath);
+                        if(!File.Exists(saveFilePath))
+                        {
+                            Console.WriteLine($"No saved game found at {saveFilePath}");
+                            continue;
+                        }
+
+                        session = await store.LoadAsync(saveFilePath);
                         break;
                     }
                     catch (Exception ex) when (ex is FileNotFoundException or InvalidDataException)
                     {
                         Console.WriteLine($"Failed to load the game: {ex.Message}");
-                        Console.WriteLine("Starting a new game instead.");
                         continue;
                     }
                 }
@@ -59,12 +64,14 @@ namespace GameOfLife_Console
                     _ => ReadNumber("Enter the height of the field (5-20):", GameConstants.MinimumGameFieldSize, GameConstants.MaximumHeight)
                 };
 
-                game = new GameOfLife.Core.GameOfLife(width, height);
-                game.GridRandomizer();
+                int gameCount = ReadNumber("Number of games (1-1000):", GameConstants.MinimumGames, GameConstants.MaximumGames);
+                session = GameSession.CreateRandom(gameCount, width, height);
                 break;
             }
 
             Console.Clear();
+            var renderer = new GameConsoleRenderer();
+            int pageIndex = 0;
             string message = "";
 
             var clock = Stopwatch.StartNew();
@@ -74,26 +81,6 @@ namespace GameOfLife_Console
             // Main loop to update the game state and handle user input
             while (true)
             {
-                if (redraw)
-                {
-                    Console.SetCursorPosition(0, 0);
-                    Console.WriteLine($"Conway's Game of Life |");
-                    Console.WriteLine($"Iteration: {game.Iteration} | Living cells: {game.LivingCells}");
-                    Console.WriteLine("S = save | Q = quit");
-                    // To show the message that the game is saved
-                    Console.WriteLine(message.PadRight(70));
-
-                    for (int row = 0; row < game.Height; row++)
-                    {
-                        for (int column = 0; column < game.Width; column++)
-                        {
-                            Console.Write(game.IsAlive(row, column) ? "██" : "  ");
-                        }
-                        Console.WriteLine();
-                    }
-                    redraw = false;
-                }
-
                 // Handle user input without blocking the game loop
                 while(Console.KeyAvailable)
                 {
@@ -102,12 +89,23 @@ namespace GameOfLife_Console
                     if(key is ConsoleKey.Q or ConsoleKey.Escape)
                         return;
 
+                    if (key == ConsoleKey.LeftArrow && pageIndex > 0)
+                    {
+                        pageIndex--;
+                        redraw = true;
+                    }
+                    if (key == ConsoleKey.RightArrow && pageIndex < session.PageCount - 1)
+                    {
+                        pageIndex++;
+                        redraw = true;
+                    }
+
                     if (key == ConsoleKey.S)
                     {
                         try
                         {
-                            await store.SaveAsync(saveFilePath, game);
-                            message = $"Saved to {saveFilePath}.";
+                            await store.SaveAsync(saveFilePath, session);
+                            message = $"Saved all {session.GameCount} games to {saveFilePath}";
                         }
                         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                         {
@@ -119,12 +117,18 @@ namespace GameOfLife_Console
 
                 if(clock.Elapsed >= nextTick)
                 {
-                    game.NextGeneration();
+                    session.NextGeneration();
                     nextTick += TimeSpan.FromSeconds(1);
                         
                     if(nextTick <= clock.Elapsed)
                         nextTick = clock.Elapsed + TimeSpan.FromSeconds(1);
                     redraw = true;
+                }
+
+                if (redraw)
+                {
+                    renderer.Draw(session.Snapshot(pageIndex), message);
+                    redraw = false;
                 }
             }
 

@@ -9,5 +9,8 @@
         public const int MaximumWidth = 35;
         public const int MaximumHeight = 20;
         public const int MinimumGameFieldSize = 5;
+        public const int MaximumGames = 1000;
+        public const int MinimumGames = 1;
+        public const int GamesPerPage = 8;
     }
 }
