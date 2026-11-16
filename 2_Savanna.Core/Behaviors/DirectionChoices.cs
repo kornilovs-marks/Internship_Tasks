@@ -7,20 +7,17 @@ namespace Savanna.Core.Behaviors;
 
 public static class DirectionChoices
 {
-    private static Position[] Directions = new Position[]
-    {
-        new(0, -1), 
-        new(1, 0), 
-        new(0, 1), 
-        new(-1, 0)
-    };
+    private static readonly Position[] Directions =
+    [
+        new(0, -1), new(1, 0), new(0, 1), new(-1, 0)
+    ];
 
     // Method to determine a new position for an animal to wander to, based on its current position and the world view
     public static Position Wander(Position origin, IWorldView world, Random random)
     {
         var choices = Directions.Where(direction => world.Contains(origin + direction)).ToArray();
         
-        return choices.Length == 0 ? default : origin + choices[random.Next(choices.Length)];
+        return choices.Length == 0 ? default : choices[random.Next(choices.Length)];
     }
 
     // Method to determine a new position for an animal to move toward or away from a target position, based on its current position and the world view

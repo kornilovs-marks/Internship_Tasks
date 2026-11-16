@@ -21,10 +21,10 @@ public class GameWorld
     // Checks if a given position is within the bounds of the grid
     public bool Contains(Position position) => position.x >= 0 && position.x < Width && position.y >= 0 && position.y < Height;
 
-    // Adds an animal to the game world
+    // Creates a read-only copy of the current worl state
     public WorldSnapshot Snapshot() => new(Width, Height, _animals.Select(animal => animal.ToView()));
 
-    // Finds all animals within a his range from a given position
+    // Adds an animal to the game world
     internal void Add(Animal animal)
     {
         if(!Contains(animal.Position))

@@ -12,13 +12,13 @@ public class AntelopeBehavior(Random random) : IAnimalBehavior
     {
         var lion = world.FindNearby(animal.Position, animal.VisionRange)
             .Where(other => other.Kind == AnimalKind.Lion)
-            .OrderBy(other => other.Position.DistanceTo(animal.Position))
+            .OrderBy(other => animal.Position.DistanceTo(other.Position))
             .FirstOrDefault();
 
         var direction = lion.Id == Guid.Empty
             ? DirectionChoices.Wander(animal.Position, world, random)
             : DirectionChoices.TowardOrAway(animal.Position, lion.Position, world, random, away: true);
-
+        
         return new AnimalActions(direction);
     }
 }

@@ -2,6 +2,6 @@
 
 public enum AnimalKind
 {
-    Antelope = 0,
-    Lion = 1
+    Antelope = 1,
+    Lion = 2
 }

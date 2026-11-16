@@ -2,9 +2,9 @@
 using Savanna.Core.Interfaces;
 using Savanna.Core.Configuration;
 
-namespace Savanna.Core.Service;
+namespace Savanna.Core.Services;
 
-public class AnimalFactory
+public class AnimalFactory : IAnimalFactory
 {
     private GameOptions _options;
     private IReadOnlyDictionary<AnimalKind, IAnimalBehavior> _behaviors;
