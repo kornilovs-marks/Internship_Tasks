@@ -41,4 +41,6 @@ public class GameWorld
 
         animal.Position = destination;
     }
+
+    internal void Remove(Animal animal) => _animals.Remove(animal);
 }
