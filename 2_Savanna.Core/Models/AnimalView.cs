@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace Savanna.Core.Models;
 
-namespace _2_Savanna.Core.Models
-{
-    public record struct AnimalView(
-        Guid Id,
-        AnimalKind Kind,
-        Position Position,
-        double Speed,
-        int VisionRange
-        );
-}
+public record struct AnimalView(
+    Guid Id,
+    AnimalKind Kind,
+    Position Position,
+    double Speed,
+    int VisionRange
+    );

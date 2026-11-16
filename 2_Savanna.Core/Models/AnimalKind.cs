@@ -1,8 +1,7 @@
-﻿namespace _2_Savanna.Core.Models
+﻿namespace Savanna.Core.Models;
+
+public enum AnimalKind
 {
-    public enum AnimalKind
-    {
-        Antelope = 0,
-        Lion = 1
-    }
+    Antelope = 0,
+    Lion = 1
 }
