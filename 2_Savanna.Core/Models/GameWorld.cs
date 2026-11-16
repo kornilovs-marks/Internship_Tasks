@@ -1,5 +1,4 @@
 ﻿using Savanna.Core.Configuration;
-using System.ComponentModel;
 
 namespace Savanna.Core.Models;
 

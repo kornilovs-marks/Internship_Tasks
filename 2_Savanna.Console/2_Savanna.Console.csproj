@@ -12,4 +12,8 @@
     <Folder Include="Services\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\2_Savanna.Core\2_Savanna.Core.csproj" />
+  </ItemGroup>
+
 </Project>
