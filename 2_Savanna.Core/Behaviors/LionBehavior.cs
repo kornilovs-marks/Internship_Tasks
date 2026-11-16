@@ -5,8 +5,6 @@ namespace Savanna.Core.Behaviors;
 
 public class LionBehavior(Random random) : IAnimalBehavior
 {
-    public AnimalKind Kind => AnimalKind.Lion;
-
     // Method to determine the next position for an antelope based on its current position and the world view
     public AnimalActions ChooseAction(AnimalView animal, IWorldView world)
     {
