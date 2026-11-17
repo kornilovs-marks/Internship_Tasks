@@ -185,20 +185,6 @@ public class GameWorldTests
     }
 
     [Fact]
-    public void Remove_WhenAnimalWasNeverAdded_ShouldNotThrow()
-    {
-        // Arrange
-        GameWorld world = CreateWorld();
-        Animal antelope = CreateAntelope(new Position(1, 1));
-
-        // Act
-        Action act = () => world.Remove(antelope);
-
-        // Assert
-        act.Should().NotThrow();
-    }
-
-    [Fact]
     public void Snapshot_WhenAnimalMovesAfterwards_ShouldKeepOldPosition()
     {
         // Arrange

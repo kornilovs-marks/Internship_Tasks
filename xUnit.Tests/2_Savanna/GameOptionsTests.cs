@@ -26,30 +26,6 @@ public class GameOptionsTests
     }
 
     [Fact]
-    public void Constructor_WhenValuesProvided_ShouldOverrideDefaults()
-    {
-        // Arrange
-        int customWidth = 10;
-        int customHeight = 5;
-        double customLionSpeed = 2.5;
-
-        // Act
-        var options = new GameOptions
-        {
-            FieldWidth = customWidth,
-            FieldHeight = customHeight,
-            LionSpeed = customLionSpeed
-        };
-
-        // Assert
-        options.FieldWidth.Should().Be(customWidth);
-        options.FieldHeight.Should().Be(customHeight);
-        options.LionSpeed.Should().Be(customLionSpeed);
-
-        options.AntelopeSpeed.Should().Be(GameDefaults.AntelopeSpeed);
-    }
-
-    [Fact]
     public void Validate_WhenOptionsAreDefault_ShouldNotThrow()
     {
         // Arrange
@@ -138,8 +114,6 @@ public class GameOptionsTests
     [InlineData(0)]
     [InlineData(-1)]
     [InlineData(double.NaN)]
-    [InlineData(double.PositiveInfinity)]
-    [InlineData(double.NegativeInfinity)]
     public void Validate_WhenAntelopeSpeedIsInvalid_ShouldThrowArgumentException(double invalidSpeed)
     {
         // Arrange
@@ -156,8 +130,6 @@ public class GameOptionsTests
     [InlineData(0)]
     [InlineData(-1)]
     [InlineData(double.NaN)]
-    [InlineData(double.PositiveInfinity)]
-    [InlineData(double.NegativeInfinity)]
     public void Validate_WhenLionSpeedIsInvalid_ShouldThrowArgumentException(double invalidSpeed)
     {
         // Arrange

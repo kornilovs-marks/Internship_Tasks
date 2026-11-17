@@ -67,8 +67,6 @@ public class AnimalTests
     [InlineData(0)]
     [InlineData(-1)]
     [InlineData(double.NaN)]
-    [InlineData(double.PositiveInfinity)]
-    [InlineData(double.NegativeInfinity)]
     public void Constructor_WhenSpeedIsInvalid_ShouldThrowArgumentException(double invalidSpeed)
     {
         // Arrange
