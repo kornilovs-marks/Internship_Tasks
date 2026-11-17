@@ -41,7 +41,9 @@ var running = true;
 
 try
 {
+    System.Console.OutputEncoding = System.Text.Encoding.UTF8;
     System.Console.CursorVisible = false;
+    System.Console.Clear();
     renderer.Render(engine.World.Snapshot());
 
     while (running)
