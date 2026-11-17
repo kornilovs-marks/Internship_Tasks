@@ -25,7 +25,7 @@ public class GameWorld
     public WorldSnapshot Snapshot() => new(Width, Height, _animals.Select(animal => animal.ToView()));
 
     // Adds an animal to the game world
-    internal void Add(Animal animal)
+    public void Add(Animal animal)
     {
         if(!Contains(animal.Position))
             throw new ArgumentOutOfRangeException(nameof(animal.Position), "Animal position is out of bounds.");
@@ -34,7 +34,7 @@ public class GameWorld
     }
 
     // Moves an animal to a new position within the game world
-    internal void Move(Animal animal, Position destination)
+    public void Move(Animal animal, Position destination)
     {
         if(!Contains(destination))
             throw new ArgumentOutOfRangeException(nameof(destination), "Destination position is out of bounds.");
@@ -42,5 +42,5 @@ public class GameWorld
         animal.Position = destination;
     }
 
-    internal void Remove(Animal animal) => _animals.Remove(animal);
+    public void Remove(Animal animal) => _animals.Remove(animal);
 }

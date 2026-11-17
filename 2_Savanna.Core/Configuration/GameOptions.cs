@@ -10,14 +10,14 @@ public class GameOptions
     public double AntelopeSpeed { get; init; } = GameDefaults.AntelopeSpeed;
     public int AntelopeVision { get; init; } = GameDefaults.AntelopeVisionRange;
     public double LionSpeed { get; init; } = GameDefaults.LionSpeed;
-    public int LionVision { get; init; } = GameDefaults.AntelopeVisionRange;
+    public int LionVision { get; init; } = GameDefaults.LionVisionRange;
 
     // Validation method to ensure that the game options are set correctly
     public void Validate()
     {
         if (FieldWidth <= 0 || FieldHeight <= 0)
-            throw new ArgumentException(nameof(GameOptions), "Field dimensions must be positive");
-        
+            throw new ArgumentException("Field dimensions must be positive", nameof(FieldWidth));
+
         if (TickMilliseconds <= 0)
             throw new ArgumentException(nameof(GameOptions), "Tick milliseconds must be positive");
         
