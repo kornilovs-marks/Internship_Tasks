@@ -1,6 +1,5 @@
 ﻿using Savanna.Core.Interfaces;
 using Savanna.Core.Models;
-using System.Diagnostics.Metrics;
 using System.Text;
 
 namespace Savanna.Console.Services;
