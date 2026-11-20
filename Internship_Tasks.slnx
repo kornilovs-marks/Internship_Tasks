@@ -1,5 +1,7 @@
 <Solution>
   <Project Path="1_GameOfLife.Core/1_GameOfLife.Core.csproj" Id="9a4be669-5292-4dda-b667-e0e883849988" />
   <Project Path="1_GameOfLife/1_GameOfLife.Console.csproj" />
+  <Project Path="2_Savanna.Console/2_Savanna.Console.csproj" Id="ada1f8a0-7ee4-4ac7-a9f8-b1bfbc9e0610" />
+  <Project Path="2_Savanna.Core/2_Savanna.Core.csproj" Id="918aafe3-2081-4275-9d2c-2c717fe38f8d" />
   <Project Path="xUnit.Tests/xUnit.Tests.csproj" Id="f3d5a022-2b8e-4614-bffb-4a37bae56947" />
 </Solution>
