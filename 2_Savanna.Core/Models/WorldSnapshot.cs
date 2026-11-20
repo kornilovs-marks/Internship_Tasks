@@ -16,8 +16,8 @@ public class WorldSnapshot : IWorldView
     }
 
     // Checks if a given position is within the bounds of the grid
-    public bool Contains(Position position) => position.x >= 0 && position.x < Width && position.y >= 0 && position.y < Height;
+    public bool Contains(Position position) => position.IsInside(Width, Height);
 
     // Finds all animals within a certain range of a given position
-    public IEnumerable<AnimalView> FindNearby(Position center, int range) => Animals.Where(a => a.Position.DistanceTo(center) <= range);
+    public IEnumerable<AnimalView> FindNearby(Position center, int range) => Animals.Where(animal => animal.Position.DistanceTo(center) <= range);
 }

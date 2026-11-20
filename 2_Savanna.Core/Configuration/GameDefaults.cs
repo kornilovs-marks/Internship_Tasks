@@ -9,4 +9,6 @@ public static class GameDefaults
     public const int LionVisionRange = 9;
     public const int AntelopeSpeed = 1;
     public const int AntelopeVisionRange = 7;
+    public const double StepCost = 1;
+    public const double MaxStoredCredit = 1;
 }

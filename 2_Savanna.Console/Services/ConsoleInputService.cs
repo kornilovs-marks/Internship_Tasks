@@ -1,16 +1,12 @@
-﻿namespace Savanna.Console.Services;
+﻿using Savanna.Console.Models;
+using Savanna.Core.Models;
 
-public enum ConsoleCommand
-{
-    AddAntelope,
-    AddLion,
-    Quit
-}
+namespace Savanna.Console.Services;
 
 // Service class that handles reading user input from the console and translating it into game commands
 public class ConsoleInputService
 {
-    public IEnumerable<ConsoleCommand> ReadAvailable()
+    public IEnumerable<GameCommand> ReadAvailable()
     {
         while (System.Console.KeyAvailable)
         {
@@ -19,13 +15,13 @@ public class ConsoleInputService
             switch (key)
             {
                 case ConsoleKey.A:
-                    yield return ConsoleCommand.AddAntelope;
+                    yield return new GameCommand(GameCommandType.AddAnimal, AnimalKind.Antelope);
                     break;
                 case ConsoleKey.L:
-                    yield return ConsoleCommand.AddLion;
+                    yield return new GameCommand(GameCommandType.AddAnimal, AnimalKind.Lion);
                     break;
                 case ConsoleKey.Q:
-                    yield return ConsoleCommand.Quit;
+                    yield return new GameCommand(GameCommandType.Quit);
                     break;
             }
         }

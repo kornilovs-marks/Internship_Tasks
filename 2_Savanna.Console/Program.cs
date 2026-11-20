@@ -50,17 +50,13 @@ try
     {
         foreach(var command in input.ReadAvailable())
         {
-            switch (command)
+            switch (command.Type)
             {
-                case ConsoleCommand.AddAntelope:
+                case GameCommandType.AddAnimal:
                     engine.TryAddAnimal(AnimalKind.Antelope);
                     renderer.Render(engine.World.Snapshot());
                     break;
-                case ConsoleCommand.AddLion:
-                    engine.TryAddAnimal(AnimalKind.Lion);
-                    renderer.Render(engine.World.Snapshot());
-                    break;
-                case ConsoleCommand.Quit:
+                case GameCommandType.Quit:
                     running = false;
                     break;
             }
