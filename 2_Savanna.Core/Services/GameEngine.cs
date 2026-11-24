@@ -1,14 +1,19 @@
-﻿using Savanna.Core.Constants;
+﻿using Savanna.Core.Configuration;
+using Savanna.Core.Constants;
 using Savanna.Core.Interfaces;
 using Savanna.Core.Models;
 
 namespace Savanna.Core.Services;
 
-public class GameEngine(GameWorld world, IAnimalFactory factory, Random random)
+public class GameEngine(GameWorld world, IAnimalFactory factory, Random random, GameOptions options)
 {
     private readonly IAnimalFactory _factory = factory;
     private readonly Random _random = random;
     public GameWorld World { get; } = world;
+    private readonly GameOptions _options = options;
+    private readonly AnimalMovement _movement = new(world, options);
+    private readonly AnimalBirth _births = new(world, factory, random, options);
+
 
     // Method to add a new animal of a specified kind to the game world at a random unoccupied position
     public bool TryAddAnimal(AnimalKind kind)
@@ -31,11 +36,14 @@ public class GameEngine(GameWorld world, IAnimalFactory factory, Random random)
         var plans = PlanActions();
 
         foreach(var plan in plans)
-            Advance(plan.Animal, plan.Action.direction, elapsed.TotalSeconds);
+            _movement.Advance(plan.Animal, plan.Action.direction, elapsed.TotalSeconds);
 
         ResolveCatches(plans);
+        RemoveDead();
+        _births.AdvanceRounds(elapsed);
     }
 
+    // Resolves all catched animals
     private void ResolveCatches(MovePlan[] plans)
     {
         var antelopesByCell = world.Animals
@@ -58,7 +66,17 @@ public class GameEngine(GameWorld world, IAnimalFactory factory, Random random)
                 antelopesByCell.Remove(lion.Position);
 
             world.Remove(meal);
+            lion.Heal(_options.LionHealthGainOnEat);
         }
+    }
+
+    // Death: removes every animal whose health has run out
+    private void RemoveDead()
+    {
+        var dead = world.Animals.Where(static animal => !animal.IsAlive).ToList();
+
+        foreach (var animal in dead)
+            world.Remove(animal);
     }
 
     // Lists every cell that no animal currently occupies
@@ -88,32 +106,6 @@ public class GameEngine(GameWorld world, IAnimalFactory factory, Random random)
         return world.Animals
             .Select(animal => new MovePlan(animal, animal.Behavior.ChooseAction(animal.ToView(), snapshot)))
             .ToArray();
-    }
-
-    // Gives the animal its share of time and spends it on steps
-    private void Advance(Animal animal, Position direction, double seconds)
-    {
-        animal.MovementCredit += animal.Speed * seconds;
-
-        if (direction.Length == 1)
-            Walk(animal, direction);
-
-        animal.MovementCredit = Math.Min(animal.MovementCredit, GameDefaults.MaxStoredCredit);
-    }
-
-    // Takes one step per full credit until the credit runs out or the edge is reached
-    private void Walk(Animal animal, Position direction)
-    {
-        while (animal.MovementCredit >= GameDefaults.StepCost)
-        {
-            animal.MovementCredit -= GameDefaults.StepCost;
-
-            var next = animal.Position + direction;
-            if (!world.Contains(next))
-                return;
-
-            world.Move(animal, next);
-        }
     }
 
     private readonly record struct MovePlan(Animal Animal, AnimalActions Action);

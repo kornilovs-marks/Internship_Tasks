@@ -53,7 +53,7 @@ try
             switch (command.Type)
             {
                 case GameCommandType.AddAnimal:
-                    engine.TryAddAnimal(AnimalKind.Antelope);
+                    engine.TryAddAnimal(command.Kind!.Value);
                     renderer.Render(engine.World.Snapshot());
                     break;
                 case GameCommandType.Quit:

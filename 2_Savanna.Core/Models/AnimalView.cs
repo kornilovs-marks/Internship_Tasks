@@ -5,5 +5,6 @@ public record struct AnimalView(
     AnimalKind Kind,
     Position Position,
     double Speed,
-    int VisionRange
+    int VisionRange,
+    double Health
     );

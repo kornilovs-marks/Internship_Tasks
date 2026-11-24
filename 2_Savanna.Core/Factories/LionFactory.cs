@@ -10,5 +10,5 @@ public class LionFactory(GameOptions options, Random random) : AnimalFactoryBase
     public override AnimalKind Kind => AnimalKind.Lion;
 
     public override Animal Create(Position position) =>
-        new Lion(position, options.LionSpeed, options.LionVision, new LionBehavior(random));
+        new Lion(position, options.LionSpeed, options.LionVision, options.AntelopeHealth, new LionBehavior(random));
 }

@@ -1,5 +1,4 @@
-﻿using Savanna.Console.Models;
-using Savanna.Core.Models;
+﻿using Savanna.Core.Models;
 
 namespace Savanna.Console.Services;
 
