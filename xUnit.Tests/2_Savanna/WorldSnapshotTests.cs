@@ -83,6 +83,6 @@ public class WorldSnapshotTests
     // Initialize an antelope view at the given position with a unique id
     private static AnimalView CreateView(Position position)
     {
-        return new AnimalView(Guid.NewGuid(), AnimalKind.Antelope, position, 4, 7);
+        return new AnimalView(Guid.NewGuid(), AnimalKind.Antelope, position, 4, 7, 10);
     }
 }
