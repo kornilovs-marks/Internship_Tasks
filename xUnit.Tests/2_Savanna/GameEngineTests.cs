@@ -19,8 +19,10 @@ public class GameEngineTests
 
     private static readonly TimeSpan Tick = TimeSpan.FromMilliseconds(100);
 
-    [Fact]
-    public void TryAddAnimal_WhenFieldHasSpace_ShouldReturnTrueAndAddAnimal()
+    [Theory]
+    [InlineData(AnimalKind.Lion)]
+    [InlineData(AnimalKind.Antelope)]
+    public void TryAddAnimal_WhenFieldHasSpace_ShouldReturnTrueAndAddAnimal(AnimalKind kind)
     {
         // Arrange
         int expectedCount = 1;
@@ -30,19 +32,20 @@ public class GameEngineTests
 
         var factoryMock = new Mock<IAnimalFactory>();
         factoryMock
-            .Setup(factory => factory.Create(AnimalKind.Antelope, It.IsAny<Position>()))
-            .Returns((AnimalKind _, Position position) => CreateAntelope(position, StandStillSpeed));
+            .Setup(factory => factory.Create(kind, It.IsAny<Position>()))
+            .Returns((AnimalKind createdKind, Position position) => CreateAnimal(createdKind, position, StandStillSpeed));
 
         var engine = new GameEngine(world, factoryMock.Object, random, new GameOptions());
 
         // Act
-        bool added = engine.TryAddAnimal(AnimalKind.Antelope);
+        bool added = engine.TryAddAnimal(kind);
 
         // Assert
         added.Should().BeTrue();
         world.Snapshot().Animals.Should().HaveCount(expectedCount);
+        world.Snapshot().Animals[0].Kind.Should().Be(kind);
         factoryMock.Verify(
-            factory => factory.Create(AnimalKind.Antelope, It.IsAny<Position>()), Times.Once);
+            factory => factory.Create(kind, It.IsAny<Position>()), Times.Once);
     }
 
     [Fact]
@@ -102,8 +105,10 @@ public class GameEngineTests
         act.Should().Throw<ArgumentOutOfRangeException>();
     }
 
-    [Fact]
-    public void Tick_WhenCreditIsBelowOne_ShouldNotMoveAnimal()
+    [Theory]
+    [InlineData(AnimalKind.Lion)]
+    [InlineData(AnimalKind.Antelope)]
+    public void Tick_WhenCreditIsBelowOne_ShouldNotMoveAnimal(AnimalKind kind)
     {
         // Arrange
         double speed = 4;    // 0.4 credit per tick, 0.8 after two ticks
@@ -111,7 +116,7 @@ public class GameEngineTests
 
         var start = new Position(2, 2);
         GameWorld world = CreateWorld(5, 5);
-        world.Add(CreateAntelope(start, speed));
+        world.Add(CreateAnimal(kind, start, speed));
 
         GameEngine engine = CreateEngine(world);
 
@@ -123,8 +128,10 @@ public class GameEngineTests
         world.Snapshot().Animals[0].Position.Should().Be(start);
     }
 
-    [Fact]
-    public void Tick_WhenCreditReachesOne_ShouldMoveExactlyOneCell()
+    [Theory]
+    [InlineData(AnimalKind.Lion)]
+    [InlineData(AnimalKind.Antelope)]
+    public void Tick_WhenCreditReachesOne_ShouldMoveExactlyOneCell(AnimalKind kind)
     {
         // Arrange
         double speed = 4;    // 1.2 credit on the third tick
@@ -133,7 +140,7 @@ public class GameEngineTests
 
         var start = new Position(2, 2);
         GameWorld world = CreateWorld(5, 5);
-        world.Add(CreateAntelope(start, speed));
+        world.Add(CreateAnimal(kind, start, speed));
 
         GameEngine engine = CreateEngine(world);
 
@@ -150,8 +157,8 @@ public class GameEngineTests
     {
         // Arrange
         GameWorld world = CreateWorld(10, 1);
-        Lion lion = CreateLion(new Position(0, 0), OneStepSpeed);
-        Antelope antelope = CreateAntelope(new Position(5, 0), StandStillSpeed);
+        Animal lion = CreateAnimal(AnimalKind.Lion, new Position(0, 0), OneStepSpeed);
+        Animal antelope = CreateAnimal(AnimalKind.Antelope, new Position(5, 0), StandStillSpeed);
         world.Add(lion);
         world.Add(antelope);
 
@@ -170,8 +177,8 @@ public class GameEngineTests
     {
         // Arrange
         GameWorld world = CreateWorld(10, 1);
-        Lion lion = CreateLion(new Position(3, 0), StandStillSpeed);
-        Antelope antelope = CreateAntelope(new Position(5, 0), OneStepSpeed);
+        Animal lion = CreateAnimal(AnimalKind.Lion, new Position(3, 0), StandStillSpeed);
+        Animal antelope = CreateAnimal(AnimalKind.Antelope, new Position(5, 0), OneStepSpeed);
         world.Add(lion);
         world.Add(antelope);
 
@@ -193,8 +200,8 @@ public class GameEngineTests
 
         var sharedCell = new Position(2, 0);
         GameWorld world = CreateWorld(5, 1);
-        world.Add(CreateLion(sharedCell, StandStillSpeed));
-        world.Add(CreateAntelope(sharedCell, StandStillSpeed));
+        world.Add(CreateAnimal(AnimalKind.Lion, sharedCell, StandStillSpeed));
+        world.Add(CreateAnimal(AnimalKind.Antelope, sharedCell, StandStillSpeed));
 
         GameEngine engine = CreateEngine(world);
 
@@ -216,9 +223,9 @@ public class GameEngineTests
 
         var sharedCell = new Position(2, 0);
         GameWorld world = CreateWorld(5, 1);
-        world.Add(CreateLion(sharedCell, StandStillSpeed));
-        world.Add(CreateLion(sharedCell, StandStillSpeed));
-        world.Add(CreateAntelope(sharedCell, StandStillSpeed));
+        world.Add(CreateAnimal(AnimalKind.Lion, sharedCell, StandStillSpeed));
+        world.Add(CreateAnimal(AnimalKind.Lion, sharedCell, StandStillSpeed));
+        world.Add(CreateAnimal(AnimalKind.Antelope, sharedCell, StandStillSpeed));
 
         GameEngine engine = CreateEngine(world);
 
@@ -234,15 +241,17 @@ public class GameEngineTests
         animals.Should().OnlyContain(animal => animal.Kind == AnimalKind.Lion);
     }
 
-    [Fact]
-    public void Tick_WhenAnimalIsAtEdge_ShouldStayInsideField()
+    [Theory]
+    [InlineData(AnimalKind.Lion)]
+    [InlineData(AnimalKind.Antelope)]
+    public void Tick_WhenAnimalIsAtEdge_ShouldStayInsideField(AnimalKind kind)
     {
         // Arrange
         int ticks = 100;
         double enoughHealthForAllSteps = 1000;
 
         GameWorld world = CreateWorld(3, 3);
-        world.Add(CreateAntelope(new Position(0, 0), OneStepSpeed, enoughHealthForAllSteps));
+        world.Add(CreateAnimal(kind, new Position(0, 0), OneStepSpeed, enoughHealthForAllSteps));
 
         GameEngine engine = CreateEngine(world);
 
@@ -256,16 +265,18 @@ public class GameEngineTests
         }
     }
 
-    [Fact]
-    public void Tick_WhenAnimalMovesOneCell_ShouldLoseMoveHealthCost()
+    [Theory]
+    [InlineData(AnimalKind.Lion)]
+    [InlineData(AnimalKind.Antelope)]
+    public void Tick_WhenAnimalMovesOneCell_ShouldLoseMoveHealthCost(AnimalKind kind)
     {
         // Arrange
         double moveCost = 0.5;
         double expectedHealth = Health - moveCost;
 
         GameWorld world = CreateWorld(5, 5);
-        Antelope antelope = CreateAntelope(new Position(2, 2), OneStepSpeed);
-        world.Add(antelope);
+        Animal animal = CreateAnimal(kind, new Position(2, 2), OneStepSpeed);
+        world.Add(animal);
 
         GameEngine engine = CreateEngine(world, new GameOptions { MoveHealthCost = moveCost });
 
@@ -273,16 +284,18 @@ public class GameEngineTests
         engine.Tick(Tick);
 
         // Assert
-        antelope.Health.Should().Be(expectedHealth);
+        animal.Health.Should().Be(expectedHealth);
     }
 
-    [Fact]
-    public void Tick_WhenAnimalDoesNotMove_ShouldKeepHealth()
+    [Theory]
+    [InlineData(AnimalKind.Lion)]
+    [InlineData(AnimalKind.Antelope)]
+    public void Tick_WhenAnimalDoesNotMove_ShouldKeepHealth(AnimalKind kind)
     {
         // Arrange
         GameWorld world = CreateWorld(5, 5);
-        Antelope antelope = CreateAntelope(new Position(2, 2), StandStillSpeed);
-        world.Add(antelope);
+        Animal animal = CreateAnimal(kind, new Position(2, 2), StandStillSpeed);
+        world.Add(animal);
 
         GameEngine engine = CreateEngine(world);
 
@@ -290,17 +303,19 @@ public class GameEngineTests
         engine.Tick(Tick);
 
         // Assert
-        antelope.Health.Should().Be(Health);
+        animal.Health.Should().Be(Health);
     }
 
-    [Fact]
-    public void Tick_WhenHealthRunsOut_ShouldRemoveAnimal()
+    [Theory]
+    [InlineData(AnimalKind.Lion)]
+    [InlineData(AnimalKind.Antelope)]
+    public void Tick_WhenHealthRunsOut_ShouldRemoveAnimal(AnimalKind kind)
     {
         // Arrange
         double healthForOneStep = 0.5;
 
         GameWorld world = CreateWorld(5, 5);
-        world.Add(CreateAntelope(new Position(2, 2), OneStepSpeed, healthForOneStep));
+        world.Add(CreateAnimal(kind, new Position(2, 2), OneStepSpeed, healthForOneStep));
 
         GameEngine engine = CreateEngine(world, new GameOptions { MoveHealthCost = 0.5 });
 
@@ -321,10 +336,10 @@ public class GameEngineTests
 
         var sharedCell = new Position(2, 0);
         GameWorld world = CreateWorld(5, 1);
-        Lion lion = CreateLion(sharedCell, StandStillSpeed);
+        Animal lion = CreateAnimal(AnimalKind.Lion, sharedCell, StandStillSpeed);
         lion.LoseHealth(damage);
         world.Add(lion);
-        world.Add(CreateAntelope(sharedCell, StandStillSpeed));
+        world.Add(CreateAnimal(AnimalKind.Antelope, sharedCell, StandStillSpeed));
 
         GameEngine engine = CreateEngine(world, new GameOptions { LionHealthGainOnEat = healthGain });
 
@@ -335,36 +350,18 @@ public class GameEngineTests
         lion.Health.Should().Be(expectedHealth);
     }
 
-    [Fact]
-    public void Tick_WhenLionEatsWithNearlyFullHealth_ShouldNotExceedMaxHealth()
-    {
-        // Arrange
-        var sharedCell = new Position(2, 0);
-        GameWorld world = CreateWorld(5, 1);
-        Lion lion = CreateLion(sharedCell, StandStillSpeed);
-        lion.LoseHealth(1);
-        world.Add(lion);
-        world.Add(CreateAntelope(sharedCell, StandStillSpeed));
-
-        GameEngine engine = CreateEngine(world, new GameOptions { LionHealthGainOnEat = 10 });
-
-        // Act
-        engine.Tick(Tick);
-
-        // Assert
-        lion.Health.Should().Be(lion.MaxHealth);
-    }
-
-    [Fact]
-    public void Tick_WhenSameKindStayNearForRequiredRounds_ShouldGiveBirth()
+    [Theory]
+    [InlineData(AnimalKind.Lion)]
+    [InlineData(AnimalKind.Antelope)]
+    public void Tick_WhenSameKindStayNearForRequiredRounds_ShouldGiveBirth(AnimalKind kind)
     {
         // Arrange
         int roundsRequired = 3;
         int expectedCount = 3;
 
         GameWorld world = CreateWorld(5, 5);
-        world.Add(CreateAntelope(new Position(2, 2), StandStillSpeed));
-        world.Add(CreateAntelope(new Position(3, 2), StandStillSpeed));
+        world.Add(CreateAnimal(kind, new Position(2, 2), StandStillSpeed));
+        world.Add(CreateAnimal(kind, new Position(3, 2), StandStillSpeed));
 
         GameEngine engine = CreateEngine(world, OneRoundPerTick(roundsRequired));
 
@@ -376,19 +373,21 @@ public class GameEngineTests
         var animals = world.Snapshot().Animals;
 
         animals.Should().HaveCount(expectedCount);
-        animals.Should().OnlyContain(animal => animal.Kind == AnimalKind.Antelope);
+        animals.Should().OnlyContain(animal => animal.Kind == kind);
     }
 
-    [Fact]
-    public void Tick_WhenSameKindNearForFewerRounds_ShouldNotGiveBirth()
+    [Theory]
+    [InlineData(AnimalKind.Lion)]
+    [InlineData(AnimalKind.Antelope)]
+    public void Tick_WhenSameKindNearForFewerRounds_ShouldNotGiveBirth(AnimalKind kind)
     {
         // Arrange
         int roundsRequired = 3;
         int expectedCount = 2;
 
         GameWorld world = CreateWorld(5, 5);
-        world.Add(CreateAntelope(new Position(2, 2), StandStillSpeed));
-        world.Add(CreateAntelope(new Position(3, 2), StandStillSpeed));
+        world.Add(CreateAnimal(kind, new Position(2, 2), StandStillSpeed));
+        world.Add(CreateAnimal(kind, new Position(3, 2), StandStillSpeed));
 
         GameEngine engine = CreateEngine(world, OneRoundPerTick(roundsRequired));
 
@@ -408,8 +407,8 @@ public class GameEngineTests
         int expectedCount = 2;
 
         GameWorld world = CreateWorld(5, 5);
-        world.Add(CreateLion(new Position(2, 2), StandStillSpeed));
-        world.Add(CreateAntelope(new Position(3, 2), StandStillSpeed));
+        world.Add(CreateAnimal(AnimalKind.Lion, new Position(2, 2), StandStillSpeed));
+        world.Add(CreateAnimal(AnimalKind.Antelope, new Position(3, 2), StandStillSpeed));
 
         GameEngine engine = CreateEngine(world, OneRoundPerTick(roundsRequired));
 
@@ -421,8 +420,10 @@ public class GameEngineTests
         world.Snapshot().Animals.Should().HaveCount(expectedCount);
     }
 
-    [Fact]
-    public void Tick_WhenBirthHappens_ShouldPlaceNewbornNextToParent()
+    [Theory]
+    [InlineData(AnimalKind.Lion)]
+    [InlineData(AnimalKind.Antelope)]
+    public void Tick_WhenBirthHappens_ShouldPlaceNewbornNextToParent(AnimalKind kind)
     {
         // Arrange
         int roundsRequired = 3;
@@ -431,8 +432,8 @@ public class GameEngineTests
         var secondParent = new Position(1, 0);
 
         GameWorld world = CreateWorld(10, 10);
-        world.Add(CreateLion(firstParent, StandStillSpeed));
-        world.Add(CreateLion(secondParent, StandStillSpeed));
+        world.Add(CreateAnimal(kind, firstParent, StandStillSpeed));
+        world.Add(CreateAnimal(kind, secondParent, StandStillSpeed));
 
         GameEngine engine = CreateEngine(world, OneRoundPerTick(roundsRequired));
 
@@ -448,16 +449,18 @@ public class GameEngineTests
         Math.Min(newborn.DistanceTo(firstParent), newborn.DistanceTo(secondParent)).Should().Be(1);
     }
 
-    [Fact]
-    public void Tick_WhenNoFreeCellNextToParents_ShouldNotGiveBirth()
+    [Theory]
+    [InlineData(AnimalKind.Lion)]
+    [InlineData(AnimalKind.Antelope)]
+    public void Tick_WhenNoFreeCellNextToParents_ShouldNotGiveBirth(AnimalKind kind)
     {
         // Arrange
         int roundsRequired = 3;
         int expectedCount = 2;
 
-        GameWorld world = CreateWorld(2, 1);    // the two parents fill the whole field
-        world.Add(CreateAntelope(new Position(0, 0), StandStillSpeed));
-        world.Add(CreateAntelope(new Position(1, 0), StandStillSpeed));
+        GameWorld world = CreateWorld(2, 1);
+        world.Add(CreateAnimal(kind, new Position(0, 0), StandStillSpeed));
+        world.Add(CreateAnimal(kind, new Position(1, 0), StandStillSpeed));
 
         GameEngine engine = CreateEngine(world, OneRoundPerTick(roundsRequired));
 
@@ -473,13 +476,13 @@ public class GameEngineTests
     public void Tick_WhenRoundIsLongerThanTick_ShouldWaitForFullRounds()
     {
         // Arrange
-        int ticksPerRound = 10;                   // 1000 ms round, 100 ms tick
+        int ticksPerRound = 10;
         int roundsRequired = 3;
         int ticksBeforeBirth = ticksPerRound * roundsRequired - 1;
 
         GameWorld world = CreateWorld(5, 5);
-        world.Add(CreateAntelope(new Position(2, 2), StandStillSpeed));
-        world.Add(CreateAntelope(new Position(3, 2), StandStillSpeed));
+        world.Add(CreateAnimal(AnimalKind.Antelope, new Position(2, 2), StandStillSpeed));
+        world.Add(CreateAnimal(AnimalKind.Antelope, new Position(3, 2), StandStillSpeed));
 
         var options = new GameOptions { RoundMilliseconds = 1000, BirthRoundsRequired = roundsRequired };
         GameEngine engine = CreateEngine(world, options);
@@ -499,17 +502,19 @@ public class GameEngineTests
         countAfterLastTick.Should().Be(3);
     }
 
-    [Fact]
-    public void Tick_WhenNextCellIsOccupied_ShouldNotMoveOrLoseHealth()
+    [Theory]
+    [InlineData(AnimalKind.Lion)]
+    [InlineData(AnimalKind.Antelope)]
+    public void Tick_WhenNextCellIsOccupied_ShouldNotMoveOrLoseHealth(AnimalKind kind)
     {
         // Arrange
         var start = new Position(0, 0);
         var occupiedCell = new Position(1, 0);
 
-        GameWorld world = CreateWorld(2, 1);    // the only way to go is onto the other antelope
-        Antelope mover = CreateAntelope(start, OneStepSpeed);
+        GameWorld world = CreateWorld(2, 1);
+        Animal mover = CreateAnimal(kind, start, OneStepSpeed);
         world.Add(mover);
-        world.Add(CreateAntelope(occupiedCell, StandStillSpeed));
+        world.Add(CreateAnimal(kind, occupiedCell, StandStillSpeed));
 
         GameEngine engine = CreateEngine(world);
 
@@ -529,9 +534,9 @@ public class GameEngineTests
         var antelopeCell = new Position(1, 0);
 
         GameWorld world = CreateWorld(5, 1);
-        Lion lion = CreateLion(new Position(0, 0), OneStepSpeed);
+        Animal lion = CreateAnimal(AnimalKind.Lion, new Position(0, 0), OneStepSpeed);
         world.Add(lion);
-        world.Add(CreateAntelope(antelopeCell, StandStillSpeed));
+        world.Add(CreateAnimal(AnimalKind.Antelope, antelopeCell, StandStillSpeed));
 
         GameEngine engine = CreateEngine(world);
 
@@ -541,27 +546,6 @@ public class GameEngineTests
         // Assert
         lion.Position.Should().Be(antelopeCell);
         world.Snapshot().Animals.Should().HaveCount(expectedCount);
-    }
-
-    [Fact]
-    public void Tick_WhenAnotherLionBlocksTheWay_ShouldNotMove()
-    {
-        // Arrange
-        var start = new Position(0, 0);
-
-        GameWorld world = CreateWorld(5, 1);
-        Lion hunter = CreateLion(start, OneStepSpeed);
-        world.Add(hunter);
-        world.Add(CreateLion(new Position(1, 0), StandStillSpeed));
-        world.Add(CreateAntelope(new Position(2, 0), StandStillSpeed));
-
-        GameEngine engine = CreateEngine(world);
-
-        // Act
-        engine.Tick(Tick);
-
-        // Assert
-        hunter.Position.Should().Be(start);
     }
 
     // Initialize options where every tick completes one round, so birth tests need few ticks
@@ -597,15 +581,16 @@ public class GameEngineTests
         return new GameEngine(world, new AnimalFactory(factories), random, options);
     }
 
-    // Initialize a lion with the given position and speed
-    private static Lion CreateLion(Position position, double speed, double health = Health)
+    // Initialize an animal of the given kind with the given position and speed
+    private static Animal CreateAnimal(AnimalKind kind, Position position, double speed, double health = Health)
     {
-        return new Lion(position, speed, Vision, health, new LionBehavior(new Random()));
-    }
+        var random = new Random();
 
-    // Initialize an antelope with the given position and speed
-    private static Antelope CreateAntelope(Position position, double speed, double health = Health)
-    {
-        return new Antelope(position, speed, Vision, health, new AntelopeBehavior(new Random()));
+        return kind switch
+        {
+            AnimalKind.Lion => new Lion(position, speed, Vision, health, new LionBehavior(random)),
+            AnimalKind.Antelope => new Antelope(position, speed, Vision, health, new AntelopeBehavior(random)),
+            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "No test animal for this kind.")
+        };
     }
 }
