@@ -5,14 +5,14 @@ using Savanna.Core.Models;
 
 namespace Savanna.Core.Services;
 
-public class GameEngine(GameWorld world, IAnimalFactory factory, Random random, GameOptions options)
+public class GameEngine(GameWorld world, IAnimalFactory factory, Random random, GameOptions options, AnimalMovement movement, AnimalBirth births)
 {
     private readonly IAnimalFactory _factory = factory;
     private readonly Random _random = random;
     public GameWorld World { get; } = world;
     private readonly GameOptions _options = options;
-    private readonly AnimalMovement _movement = new(world, options);
-    private readonly AnimalBirth _births = new(world, factory, random, options);
+    private readonly AnimalMovement _movement = movement;
+    private readonly AnimalBirth _births = births;
 
 
     // Method to add a new animal of a specified kind to the game world at a random unoccupied position

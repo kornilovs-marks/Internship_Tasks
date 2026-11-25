@@ -34,7 +34,7 @@ public class GameOptions
         ArgumentOutOfRangeException.ThrowIfNegative(BirthRange);
 
         if (!double.IsFinite(AntelopeSpeed) || AntelopeSpeed <= 0 || !double.IsFinite(LionSpeed) || LionSpeed <= 0)
-            throw new ArgumentException(nameof(GameOptions), "Animal speeds must be positive finite numbers");
+            throw new ArgumentException("Animal speeds must be positive finite numbers", nameof(GameOptions));
 
         if (!double.IsFinite(AntelopeHealth) || AntelopeHealth <= 0 || !double.IsFinite(LionHealth) || LionHealth <= 0)
             throw new ArgumentException("Animal health must be a positive finite number", nameof(AntelopeHealth));

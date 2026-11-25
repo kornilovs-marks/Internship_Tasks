@@ -30,7 +30,6 @@ public abstract class Animal
         Behavior = behavior;
         Health = health;
         MaxHealth = health;
-        Behavior = behavior;
     }
 
     public AnimalView ToView() => new(Id, Kind, Position, Speed, VisionRange, Health);
