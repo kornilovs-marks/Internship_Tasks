@@ -71,13 +71,7 @@ public class GameEngine(GameWorld world, IAnimalFactory factory, Random random, 
     }
 
     // Death: removes every animal whose health has run out
-    private void RemoveDead()
-    {
-        var dead = world.Animals.Where(static animal => !animal.IsAlive).ToList();
-
-        foreach (var animal in dead)
-            world.Remove(animal);
-    }
+    private void RemoveDead() => world.RemoveWhere(static animal => !animal.IsAlive);
 
     // Lists every cell that no animal currently occupies
     private List<Position> FindFreeCells()

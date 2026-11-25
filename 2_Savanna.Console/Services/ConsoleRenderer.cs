@@ -10,9 +10,10 @@ public class ConsoleRenderer
     private const string EmptyCell = "··";
     private const string LionSymbol = "🦁";
     private const string AntelopeSymbol = "🦌";
-    private const int MaxShownHealth = 99;    // a label must fit the 2-column cell
+    private const int CellWidth = 2;
+    private const int LargestHpLabel = 99;
 
-    // Method to render the current state of the world to the console, displaying animal positions and types
+    // Method to render the current state of the world to the console, displaying animal positions, health and types
     public void Render(IWorldView world)
     {
         var shown = PickShownAnimals(world);
@@ -22,7 +23,7 @@ public class ConsoleRenderer
         {
             for (var x = 0; x < world.Width; x++)
             {
-                cells[y, x] = shown[y, x] is AnimalView animal ? GetAnimalSymbol(animal) : EmptyCell;
+                cells[y, x] = shown[y, x] is AnimalView animal ? GetAnimalSymbol(animal.Kind) : EmptyCell;
             }
         }
 
@@ -76,15 +77,18 @@ public class ConsoleRenderer
         return shown;
     }
 
-    private static string GetAnimalSymbol(AnimalView animal) =>
-        animal.Kind switch
+    private static string GetAnimalSymbol(AnimalKind kind) =>
+        kind switch
         {
             AnimalKind.Lion => LionSymbol,
             AnimalKind.Antelope => AntelopeSymbol,
-            _ => throw new ArgumentOutOfRangeException(nameof(animal.Kind), animal.Kind, null)
+            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
         };
 
-    // Whole number rounded up (0.5 shows as 1, so a living animal never shows 0), padded to 2 columns
-    private static string FormatHealth(double health) =>
-        Math.Clamp((int)Math.Ceiling(health), 0, MaxShownHealth).ToString().PadLeft(2);
+    // Whole number rounded up so at most only 2 char are visible on the board, padded to 2 columns
+    private static string FormatHealth(double health)
+    {
+        var label = Math.Min((int)Math.Ceiling(health), LargestHpLabel);
+        return $"{label,CellWidth}";
+    }
 }

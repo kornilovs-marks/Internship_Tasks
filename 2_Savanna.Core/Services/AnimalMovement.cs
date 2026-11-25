@@ -4,7 +4,6 @@ using Savanna.Core.Models;
 
 namespace Savanna.Core.Services;
 
-// Moves animals across the world: spends movement credit, charges health per step and stops at walls or occupied cells
 public class AnimalMovement(GameWorld world, GameOptions options)
 {
     private readonly GameWorld _world = world;
@@ -37,14 +36,14 @@ public class AnimalMovement(GameWorld world, GameOptions options)
         }
     }
 
-    // One animal per cell; the only exception is a lion stepping onto an antelope to eat it
+    // One animal per cell, lion is an exception
     private bool IsBlocked(Animal animal, Position cell)
     {
-        var occupants = _world.Animals.Where(other => other.Position == cell).ToList();
+        var occupied = _world.Animals.Where(other => other.Position == cell).ToList();
 
-        if (occupants.Count == 0)
+        if (occupied.Count == 0)
             return false;
 
-        return animal is not Lion || occupants.Any(static other => other is not Antelope);
+        return animal is not Lion || occupied.Any(static other => other is not Antelope);
     }
 }
