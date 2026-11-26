@@ -28,6 +28,7 @@ public class GameEngineTests
         int expectedCount = 1;
 
         var random = new Random();
+        var options = new GameOptions();
         GameWorld world = CreateWorld(5, 5);
 
         var factoryMock = new Mock<IAnimalFactory>();
@@ -35,7 +36,9 @@ public class GameEngineTests
             .Setup(factory => factory.Create(kind, It.IsAny<Position>()))
             .Returns((AnimalKind createdKind, Position position) => CreateAnimal(createdKind, position, StandStillSpeed));
 
-        var engine = new GameEngine(world, factoryMock.Object, random, new GameOptions());
+        var movement = new AnimalMovement(world, options);
+        var birth = new AnimalBirth(world, factoryMock.Object, random, options);
+        var engine = new GameEngine(world, factoryMock.Object, random, options, movement, birth);
 
         // Act
         bool added = engine.TryAddAnimal(kind);
@@ -566,19 +569,22 @@ public class GameEngineTests
         return new GameWorld(options);
     }
 
-    // Initialize an engine with the real factories
+    // Initialize an engine with the real factories and services, all sharing the same world
     private static GameEngine CreateEngine(GameWorld world, GameOptions? options = null)
     {
         options ??= new GameOptions();
 
         var random = new Random();
-        var factories = new AnimalFactoryBase[]
+        var factory = new AnimalFactory(new AnimalFactoryBase[]
         {
-            new AntelopeFactory(options, random),
-            new LionFactory(options, random)
-        };
+        new AntelopeFactory(options, random),
+        new LionFactory(options, random)
+        });
 
-        return new GameEngine(world, new AnimalFactory(factories), random, options);
+        var movement = new AnimalMovement(world, options);
+        var birth = new AnimalBirth(world, factory, random, options);
+
+        return new GameEngine(world, factory, random, options, movement, birth);
     }
 
     // Initialize an animal of the given kind with the given position and speed

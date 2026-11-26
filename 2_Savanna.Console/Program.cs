@@ -24,6 +24,8 @@ services.AddSingleton<AnimalFactoryBase, LionFactory>();
 services.AddSingleton<IAnimalFactory, AnimalFactory>();
 services.AddSingleton<GameWorld>();
 services.AddSingleton<GameEngine>();
+services.AddSingleton<AnimalMovement>();
+services.AddSingleton<AnimalBirth>();
 services.AddSingleton<ConsoleInputService>();
 services.AddSingleton<ConsoleRenderer>();
 
