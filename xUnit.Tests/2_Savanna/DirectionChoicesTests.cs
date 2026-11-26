@@ -1,6 +1,9 @@
 ﻿using FluentAssertions;
-using Savanna.Core.Behaviors;
+using Savanna.AnimalsBase.Behaviors;
+using Savanna.AnimalsBase.Factories;
+using Savanna.AnimalsBase.Models;
 using Savanna.Core.Models;
+using Savanna.Core.Services;
 
 namespace xUnit.Tests.Savanna;
 
@@ -27,8 +30,7 @@ public class DirectionChoicesTests
             Position direction = DirectionChoices.Wander(origin, world, random);
 
             // Assert
-            int stepLength = Math.Abs(direction.x) + Math.Abs(direction.y);
-            stepLength.Should().Be(expectedStepLength);
+            direction.Length.Should().Be(expectedStepLength);
         }
     }
 
@@ -115,7 +117,7 @@ public class DirectionChoicesTests
     {
         // Arrange
         var corner = new Position(0, 0);
-        var lion = new Position(1, 1);
+        var threat = new Position(1, 1);
 
         WorldSnapshot world = CreateWorld(Width, Height);
         var random = new Random();
@@ -123,16 +125,16 @@ public class DirectionChoicesTests
         for (int i = 0; i < Repetitions; i++)
         {
             // Act
-            Position direction = DirectionChoices.TowardOrAway(corner, lion, world, random, away: true);
+            Position direction = DirectionChoices.TowardOrAway(corner, threat, world, random, away: true);
 
             // Assert
             world.Contains(corner + direction).Should().BeTrue();
         }
     }
 
-    // Initialize an empty world of the given size
+    // Initialize an empty world of the given size; no species are needed because no animals are in it
     private static WorldSnapshot CreateWorld(int width, int height)
     {
-        return new WorldSnapshot(width, height, Array.Empty<AnimalView>());
+        return new WorldSnapshot(width, height, [], new SpeciesRegistry(Array.Empty<AnimalFactoryBase>()));
     }
 }

@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Savanna.AnimalsBase.Factories;
+using Savanna.AnimalsBase.Models;
 using Savanna.Console.Services;
 using Savanna.Core.Configuration;
 using Savanna.Core.Factories;
@@ -22,6 +24,7 @@ services.AddSingleton<Random>();
 services.AddSingleton<AnimalFactoryBase, AntelopeFactory>();
 services.AddSingleton<AnimalFactoryBase, LionFactory>();
 services.AddSingleton<IAnimalFactory, AnimalFactory>();
+services.AddSingleton<SpeciesRegistry>();
 services.AddSingleton<GameWorld>();
 services.AddSingleton<GameEngine>();
 services.AddSingleton<AnimalMovement>();
@@ -55,7 +58,7 @@ try
             switch (command.Type)
             {
                 case GameCommandType.AddAnimal:
-                    engine.TryAddAnimal(command.Kind!.Value);
+                    engine.TryAddAnimal(command.Species!.Value);
                     renderer.Render(engine.World.Snapshot());
                     break;
                 case GameCommandType.Quit:

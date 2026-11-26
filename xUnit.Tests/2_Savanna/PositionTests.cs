@@ -1,5 +1,5 @@
 ﻿using FluentAssertions;
-using Savanna.Core.Models;
+using Savanna.AnimalsBase.Models;
 
 namespace xUnit.Tests.Savanna;
 

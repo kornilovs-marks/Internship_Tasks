@@ -1,8 +1,9 @@
 ﻿using Savanna.Core.Models;
+using Savanna.AnimalsBase.Models;
 
 namespace Savanna.Core.Interfaces;
 
 public interface IAnimalFactory
 {
-    Animal Create(AnimalKind kind, Position position);
+    Animal Create(SpeciesId species, Position position);
 }

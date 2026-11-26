@@ -1,6 +1,10 @@
 ﻿using FluentAssertions;
+using Savanna.AnimalsBase.Factories;
+using Savanna.AnimalsBase.Models;
 using Savanna.Core.Behaviors;
 using Savanna.Core.Models;
+using Savanna.Core.Services;
+using xUnit.Tests.Savanna.TestDoubles;
 
 namespace xUnit.Tests.Savanna;
 
@@ -8,17 +12,17 @@ namespace xUnit.Tests.Savanna;
 public class AntelopeBehaviorTests
 {
     private const int Repetitions = 50;
+    private const double Health = TestSpecies.DefaultHealth;
 
     [Fact]
-    public void ChooseAction_WhenNoLionInVision_ShouldReturnSingleStep()
+    public void ChooseAction_WhenNoThreatInVision_ShouldReturnSingleStep()
     {
         // Arrange
         int visionRange = 7;
         int expectedStepLength = 1;
-        double health = 10;
 
-        AnimalView antelope = CreateView(AnimalKind.Antelope, new Position(2, 2), visionRange, health);
-        WorldSnapshot world = CreateWorld(5, 5, antelope);
+        AnimalView antelope = CreateView(TestSpecies.PreyId, new Position(2, 2), visionRange);
+        WorldSnapshot world = CreateWorld(5, 5, [antelope]);
 
         var behavior = new AntelopeBehavior(new Random());
 
@@ -26,23 +30,20 @@ public class AntelopeBehaviorTests
         AnimalActions action = behavior.ChooseAction(antelope, world);
 
         // Assert
-        int stepLength = Math.Abs(action.direction.x) + Math.Abs(action.direction.y);
-
-        stepLength.Should().Be(expectedStepLength);
+        action.direction.Length.Should().Be(expectedStepLength);
         action.targetId.Should().BeNull();
     }
 
     [Fact]
-    public void ChooseAction_WhenLionInVision_ShouldMoveAway()
+    public void ChooseAction_WhenPredatorInVision_ShouldMoveAway()
     {
         // Arrange
         int visionRange = 7;
-        var expectedDirection = new Position(-1, 0);    // lion is to the right, so flee left
-        double health = 10;
+        var expectedDirection = StubBehavior.Left;    // predator is to the right, so flee left
 
-        AnimalView antelope = CreateView(AnimalKind.Antelope, new Position(5, 0), visionRange, health);
-        AnimalView lion = CreateView(AnimalKind.Lion, new Position(7, 0), visionRange, health);
-        WorldSnapshot world = CreateWorld(10, 1, antelope, lion);
+        AnimalView antelope = CreateView(TestSpecies.PreyId, new Position(5, 0), visionRange);
+        AnimalView predator = CreateView(TestSpecies.PredatorId, new Position(7, 0), visionRange);
+        WorldSnapshot world = CreateWorld(10, 1, [antelope, predator]);
 
         var behavior = new AntelopeBehavior(new Random());
 
@@ -55,37 +56,97 @@ public class AntelopeBehaviorTests
     }
 
     [Fact]
-    public void ChooseAction_WhenLionIsOutsideVision_ShouldIgnoreIt()
+    public void ChooseAction_WhenPredatorIsOutsideVision_ShouldIgnoreIt()
     {
         // Arrange
         int visionRange = 3;
-        var towardLion = new Position(1, 0);
-        double health = 10;
+        var towardPredator = StubBehavior.Right;
 
-        AnimalView antelope = CreateView(AnimalKind.Antelope, new Position(2, 0), visionRange, health);
-        AnimalView lion = CreateView(AnimalKind.Lion, new Position(9, 0), visionRange, health);   // distance 7, outside vision
-        WorldSnapshot world = CreateWorld(10, 1, antelope, lion);
+        AnimalView antelope = CreateView(TestSpecies.PreyId, new Position(2, 0), visionRange);
+        AnimalView predator = CreateView(TestSpecies.PredatorId, new Position(9, 0), visionRange);   // distance 7, outside vision
+        WorldSnapshot world = CreateWorld(10, 1, [antelope, predator]);
 
         var behavior = new AntelopeBehavior(new Random());
-        var directions = new List<Position>();
 
         // Act
+        List<Position> directions = ChooseManyTimes(behavior, antelope, world);
+
+        // Assert
+        directions.Should().Contain(towardPredator);
+    }
+
+    [Fact]
+    public void ChooseAction_WhenNearbyAnimalCannotEatIt_ShouldIgnoreIt()
+    {
+        // Arrange
+        int visionRange = 7;
+        var towardNeighbour = StubBehavior.Right;
+
+        AnimalView antelope = CreateView(TestSpecies.PreyId, new Position(2, 0), visionRange);
+        AnimalView neighbour = CreateView(TestSpecies.PreyId, new Position(4, 0), visionRange);   // same species, not a threat
+        WorldSnapshot world = CreateWorld(10, 1, [antelope, neighbour]);
+
+        var behavior = new AntelopeBehavior(new Random());
+
+        // Act
+        List<Position> directions = ChooseManyTimes(behavior, antelope, world);
+
+        // Assert
+        directions.Should().Contain(towardNeighbour);
+    }
+
+    [Fact]
+    public void ChooseAction_WhenNewPredatorSpeciesInVision_ShouldMoveAway()
+    {
+        // Arrange: a species the behavior was never written for, like an imported cheetah
+        int visionRange = 7;
+        var expectedDirection = StubBehavior.Left;    // new predator is to the right, so flee left
+
+        var importedId = new SpeciesId("TestImportedPredator");
+        var imported = new SpeciesDescriptor(
+            importedId, "Imported", "II", 'I', TestSpecies.DefaultSpeed, visionRange, Health,
+            new HashSet<SpeciesId> { TestSpecies.PreyId });
+
+        AnimalView antelope = CreateView(TestSpecies.PreyId, new Position(5, 0), visionRange);
+        AnimalView newPredator = CreateView(importedId, new Position(7, 0), visionRange);
+        WorldSnapshot world = CreateWorld(10, 1, [antelope, newPredator], new StubFactory(imported));
+
+        var behavior = new AntelopeBehavior(new Random());
+
+        // Act
+        AnimalActions action = behavior.ChooseAction(antelope, world);
+
+        // Assert
+        action.direction.Should().Be(expectedDirection);
+    }
+
+    // Runs the random behavior many times so a test can check which directions it ever chooses
+    private static List<Position> ChooseManyTimes(AntelopeBehavior behavior, AnimalView antelope, WorldSnapshot world)
+    {
+        var directions = new List<Position>();
+
         for (int i = 0; i < Repetitions; i++)
             directions.Add(behavior.ChooseAction(antelope, world).direction);
 
-        // Assert
-        directions.Should().Contain(towardLion);
+        return directions;
     }
 
-    // Initialize a world of the given size containing the given animals
-    private static WorldSnapshot CreateWorld(int width, int height, params AnimalView[] animals)
+    // Initialize a world of the given size containing the given animals; it knows the test species plus any extra ones
+    private static WorldSnapshot CreateWorld(int width, int height, AnimalView[] animals, params AnimalFactoryBase[] extraSpecies)
     {
-        return new WorldSnapshot(width, height, animals);
+        AnimalFactoryBase[] factories =
+        [
+            new StubFactory(TestSpecies.Prey()),
+            new StubFactory(TestSpecies.Predator()),
+            .. extraSpecies
+        ];
+
+        return new WorldSnapshot(width, height, animals, new SpeciesRegistry(factories));
     }
 
-    // Initialize an animal view of the given kind at the given position
-    private static AnimalView CreateView(AnimalKind kind, Position position, int visionRange, double health)
+    // Initialize an animal view of the given species at the given position
+    private static AnimalView CreateView(SpeciesId species, Position position, int visionRange)
     {
-        return new AnimalView(Guid.NewGuid(), kind, position, 4, visionRange, health);
+        return new AnimalView(Guid.NewGuid(), species, position, TestSpecies.DefaultSpeed, visionRange, Health);
     }
 }

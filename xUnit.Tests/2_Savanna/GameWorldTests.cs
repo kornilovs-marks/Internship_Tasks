@@ -1,10 +1,14 @@
 ﻿using FluentAssertions;
-using Savanna.Core.Behaviors;
+using Savanna.AnimalsBase.Factories;
+using Savanna.AnimalsBase.Models;
 using Savanna.Core.Configuration;
 using Savanna.Core.Models;
+using Savanna.Core.Services;
+using xUnit.Tests.Savanna.TestDoubles;
 
 namespace xUnit.Tests.Savanna;
 
+// Tests the GameWorld container. Species and behaviors are test doubles, so no real animal is involved.
 [Trait("Category", "World")]
 public class GameWorldTests
 {
@@ -18,7 +22,7 @@ public class GameWorldTests
         var options = new GameOptions { FieldWidth = Width, FieldHeight = Height };
 
         // Act
-        var world = new GameWorld(options);
+        var world = new GameWorld(options, CreateRegistry());
 
         // Assert
         world.Width.Should().Be(Width);
@@ -32,7 +36,7 @@ public class GameWorldTests
         var invalidOptions = new GameOptions { FieldWidth = 0 };
 
         // Act
-        Action act = () => new GameWorld(invalidOptions);
+        Action act = () => new GameWorld(invalidOptions, CreateRegistry());
 
         // Assert
         act.Should().Throw<ArgumentException>();
@@ -82,16 +86,16 @@ public class GameWorldTests
         int expectedCount = 1;
 
         GameWorld world = CreateWorld();
-        Animal lion = CreateLion(new Position(1, 1));
+        Animal predator = CreateAnimal(Role.Predator, new Position(1, 1));
 
         // Act
-        world.Add(lion);
+        world.Add(predator);
 
         // Assert
         var animals = world.Snapshot().Animals;
 
         animals.Should().HaveCount(expectedCount);
-        animals[0].Id.Should().Be(lion.Id);
+        animals[0].Id.Should().Be(predator.Id);
     }
 
     [Fact]
@@ -99,10 +103,10 @@ public class GameWorldTests
     {
         // Arrange
         GameWorld world = CreateWorld();
-        Animal lion = CreateLion(new Position(Width, 0));
+        Animal predator = CreateAnimal(Role.Predator, new Position(Width, 0));
 
         // Act
-        Action act = () => world.Add(lion);
+        Action act = () => world.Add(predator);
 
         // Assert
         act.Should().Throw<ArgumentOutOfRangeException>();
@@ -117,14 +121,14 @@ public class GameWorldTests
         var destination = new Position(2, 1);
 
         GameWorld world = CreateWorld();
-        Animal antelope = CreateAntelope(start);
-        world.Add(antelope);
+        Animal prey = CreateAnimal(Role.Prey, start);
+        world.Add(prey);
 
         // Act
-        world.Move(antelope, destination);
+        world.Move(prey, destination);
 
         // Assert
-        antelope.Position.Should().Be(destination);
+        prey.Position.Should().Be(destination);
         world.Snapshot().Animals[0].Position.Should().Be(destination);
     }
 
@@ -136,15 +140,15 @@ public class GameWorldTests
         var outside = new Position(-1, 0);
 
         GameWorld world = CreateWorld();
-        Animal antelope = CreateAntelope(start);
-        world.Add(antelope);
+        Animal prey = CreateAnimal(Role.Prey, start);
+        world.Add(prey);
 
         // Act
-        Action act = () => world.Move(antelope, outside);
+        Action act = () => world.Move(prey, outside);
 
         // Assert
         act.Should().Throw<ArgumentOutOfRangeException>();
-        antelope.Position.Should().Be(start);
+        prey.Position.Should().Be(start);
     }
 
     [Fact]
@@ -152,11 +156,11 @@ public class GameWorldTests
     {
         // Arrange
         GameWorld world = CreateWorld();
-        Animal antelope = CreateAntelope(new Position(1, 1));
-        world.Add(antelope);
+        Animal prey = CreateAnimal(Role.Prey, new Position(1, 1));
+        world.Add(prey);
 
         // Act
-        world.Remove(antelope);
+        world.Remove(prey);
 
         // Assert
         world.Snapshot().Animals.Should().BeEmpty();
@@ -169,19 +173,19 @@ public class GameWorldTests
         int expectedCount = 1;
 
         GameWorld world = CreateWorld();
-        Animal lion = CreateLion(new Position(0, 0));
-        Animal antelope = CreateAntelope(new Position(1, 1));
-        world.Add(lion);
-        world.Add(antelope);
+        Animal predator = CreateAnimal(Role.Predator, new Position(0, 0));
+        Animal prey = CreateAnimal(Role.Prey, new Position(1, 1));
+        world.Add(predator);
+        world.Add(prey);
 
         // Act
-        world.Remove(antelope);
+        world.Remove(prey);
 
         // Assert
         var animals = world.Snapshot().Animals;
 
         animals.Should().HaveCount(expectedCount);
-        animals[0].Id.Should().Be(lion.Id);
+        animals[0].Id.Should().Be(predator.Id);
     }
 
     [Fact]
@@ -189,10 +193,10 @@ public class GameWorldTests
     {
         // Arrange
         GameWorld world = CreateWorld();
-        Animal antelope = CreateAntelope(new Position(1, 1));
+        Animal prey = CreateAnimal(Role.Prey, new Position(1, 1));
 
         // Act
-        Action act = () => world.Remove(antelope);
+        Action act = () => world.Remove(prey);
 
         // Assert
         act.Should().NotThrow();
@@ -213,6 +217,20 @@ public class GameWorldTests
     }
 
     [Fact]
+    public void Snapshot_ShouldKnowWhoEatsWhomFromRegistry()
+    {
+        // Arrange
+        GameWorld world = CreateWorld();
+
+        // Act
+        WorldSnapshot snapshot = world.Snapshot();
+
+        // Assert
+        snapshot.CanEat(TestSpecies.PredatorId, TestSpecies.PreyId).Should().BeTrue();
+        snapshot.CanEat(TestSpecies.PreyId, TestSpecies.PredatorId).Should().BeFalse();
+    }
+
+    [Fact]
     public void Snapshot_WhenAnimalMovesAfterwards_ShouldKeepOldPosition()
     {
         // Arrange
@@ -220,13 +238,13 @@ public class GameWorldTests
         var destination = new Position(2, 1);
 
         GameWorld world = CreateWorld();
-        Animal antelope = CreateAntelope(start);
-        world.Add(antelope);
+        Animal prey = CreateAnimal(Role.Prey, start);
+        world.Add(prey);
 
         WorldSnapshot snapshot = world.Snapshot();
 
         // Act
-        world.Move(antelope, destination);
+        world.Move(prey, destination);
 
         // Assert
         snapshot.Animals[0].Position.Should().Be(start);
@@ -240,10 +258,22 @@ public class GameWorldTests
         WorldSnapshot snapshot = world.Snapshot();
 
         // Act
-        world.Add(CreateLion(new Position(0, 0)));
+        world.Add(CreateAnimal(Role.Predator, new Position(0, 0)));
 
         // Assert
         snapshot.Animals.Should().BeEmpty();
+    }
+
+    // Initialize a registry that knows the test species
+    private static SpeciesRegistry CreateRegistry()
+    {
+        AnimalFactoryBase[] factories =
+        [
+            new StubFactory(TestSpecies.Prey()),
+            new StubFactory(TestSpecies.Predator())
+        ];
+
+        return new SpeciesRegistry(factories);
     }
 
     // Initialize a small world used by every test
@@ -251,18 +281,12 @@ public class GameWorldTests
     {
         var options = new GameOptions { FieldWidth = Width, FieldHeight = Height };
 
-        return new GameWorld(options);
+        return new GameWorld(options, CreateRegistry());
     }
 
-    // Initialize a lion at the given position
-    private static Lion CreateLion(Position position)
+    // Initialize an animal that plays the given role at the given position
+    private static Animal CreateAnimal(Role role, Position position)
     {
-        return new Lion(position, 5, 9, 20, new LionBehavior(new Random()));
-    }
-
-    // Initialize an antelope at the given position
-    private static Antelope CreateAntelope(Position position)
-    {
-        return new Antelope(position, 4, 7, 20, new AntelopeBehavior(new Random()));
+        return new Animal(TestSpecies.For(role), position, StubBehavior.StandStill());
     }
 }

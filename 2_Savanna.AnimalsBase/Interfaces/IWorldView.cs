@@ -1,6 +1,6 @@
-﻿using Savanna.Core.Models;
+﻿using Savanna.AnimalsBase.Models;
 
-namespace Savanna.Core.Interfaces;
+namespace Savanna.AnimalsBase.Interfaces;
 
 public interface IWorldView
 {
@@ -9,4 +9,5 @@ public interface IWorldView
     IReadOnlyList<AnimalView> Animals { get; }
     IEnumerable<AnimalView> FindNearby(Position center, int range);
     bool Contains(Position position);
+    bool CanEat(SpeciesId eater, SpeciesId food);
 }

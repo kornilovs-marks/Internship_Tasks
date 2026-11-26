@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\1_GameOfLife.Core\1_GameOfLife.Core.csproj" />
     <ProjectReference Include="..\1_GameOfLife\1_GameOfLife.Console.csproj" />
+    <ProjectReference Include="..\2_Savanna.AnimalsBase\2_Savanna.AnimalsBase.csproj" />
     <ProjectReference Include="..\2_Savanna.Console\2_Savanna.Console.csproj" />
     <ProjectReference Include="..\2_Savanna.Core\2_Savanna.Core.csproj" />
   </ItemGroup>

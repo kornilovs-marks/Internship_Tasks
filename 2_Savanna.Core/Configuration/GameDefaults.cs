@@ -14,7 +14,7 @@ public static class GameDefaults
     public const double AntelopeHealth = 20;
     public const double LionHealth = 20;
     public const double MoveHealthCost = 0.5;
-    public const double LionHealthGainOnEat = 10;
+    public const double HealthGainOnEat = 10;
     public const int RoundMilliseconds = 1000;
     public const int BirthRoundsRequired = 3;
     public const int BirthRange = 1;

@@ -1,5 +1,6 @@
-﻿using Savanna.Core.Interfaces;
-using Savanna.Core.Models;
+﻿using Savanna.AnimalsBase.Behaviors;
+using Savanna.AnimalsBase.Interfaces;
+using Savanna.AnimalsBase.Models;
 
 namespace Savanna.Core.Behaviors;
 
@@ -8,18 +9,18 @@ public class LionBehavior(Random random) : IAnimalBehavior
     // Method to determine the next position for an antelope based on its current position and the world view
     public AnimalActions ChooseAction(AnimalView animal, IWorldView world)
     {
-        var antelope = world.FindNearby(animal.Position, animal.VisionRange)
-            .Where(other => other.Kind == AnimalKind.Antelope)
+        var food = world.FindNearby(animal.Position, animal.VisionRange)
+            .Where(other => other.Id != animal.Id && world.CanEat(animal.Species, other.Species))
             .OrderBy(other => animal.Position.DistanceTo(other.Position))
             .FirstOrDefault();
 
-        if (antelope.Id == Guid.Empty)
-            return new AnimalActions(DirectionChoices.Wander(animal.Position, world, random));
+        if (food.Id == Guid.Empty)
+            return new AnimalActions(Savanna.AnimalsBase.Behaviors.DirectionChoices.Wander(animal.Position, world, random));
 
-        if (antelope.Position == animal.Position)
-            return new AnimalActions(default, antelope.Id);
+        if (food.Position == animal.Position)
+            return new AnimalActions(default, food.Id);
 
-        var direction = DirectionChoices.TowardOrAway(animal.Position, antelope.Position, world, random, away: false);
-        return new AnimalActions(direction, antelope.Id);
+        var direction = Savanna.AnimalsBase.Behaviors.DirectionChoices.TowardOrAway(animal.Position, food.Position, world, random, away: false);
+        return new AnimalActions(direction, food.Id);
     }
 }

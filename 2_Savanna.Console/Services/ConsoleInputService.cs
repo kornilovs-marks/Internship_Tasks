@@ -1,4 +1,6 @@
-﻿using Savanna.Core.Models;
+﻿using Savanna.AnimalsBase.Models;
+using Savanna.Core.Factories;
+using Savanna.Core.Models;
 
 namespace Savanna.Console.Services;
 
@@ -14,10 +16,10 @@ public class ConsoleInputService
             switch (key)
             {
                 case ConsoleKey.A:
-                    yield return new GameCommand(GameCommandType.AddAnimal, AnimalKind.Antelope);
+                    yield return new GameCommand(GameCommandType.AddAnimal, AntelopeFactory.Id);
                     break;
                 case ConsoleKey.L:
-                    yield return new GameCommand(GameCommandType.AddAnimal, AnimalKind.Lion);
+                    yield return new GameCommand(GameCommandType.AddAnimal, LionFactory.Id);
                     break;
                 case ConsoleKey.Q:
                     yield return new GameCommand(GameCommandType.Quit);

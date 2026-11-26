@@ -1,6 +1,7 @@
 ﻿using Savanna.Core.Configuration;
 using Savanna.Core.Constants;
 using Savanna.Core.Interfaces;
+using Savanna.AnimalsBase.Models;
 using Savanna.Core.Models;
 
 namespace Savanna.Core.Services;
@@ -16,7 +17,7 @@ public class GameEngine(GameWorld world, IAnimalFactory factory, Random random, 
 
 
     // Method to add a new animal of a specified kind to the game world at a random unoccupied position
-    public bool TryAddAnimal(AnimalKind kind)
+    public bool TryAddAnimal(SpeciesId species)
     {
         var freeCells = FindFreeCells();
         
@@ -24,7 +25,7 @@ public class GameEngine(GameWorld world, IAnimalFactory factory, Random random, 
             return false;
 
         var position = freeCells[_random.Next(freeCells.Count)];
-        world.Add(_factory.Create(kind, position));
+        world.Add(_factory.Create(species, position));
         return true;
     }
 
@@ -46,27 +47,26 @@ public class GameEngine(GameWorld world, IAnimalFactory factory, Random random, 
     // Resolves all catched animals
     private void ResolveCatches(MovePlan[] plans)
     {
-        var antelopesByCell = world.Animals
-            .OfType<Antelope>()
+        var animalsByCell = world.Animals
             .GroupBy(static antelope => antelope.Position)
             .ToDictionary(static group => group.Key, static group => group.ToList<Animal>());
 
         foreach (var plan in plans)
         {
-            if (plan.Animal is not Lion lion)
+            var hunter = plan.Animal;
+
+            if (!animalsByCell.TryGetValue(hunter.Position, out var occupants) || !occupants.Contains(hunter))
                 continue;
 
-            if (!antelopesByCell.TryGetValue(lion.Position, out var prey))
-                continue;
-
-            var meal = prey.Find(antelope => antelope.Id == plan.Action.targetId) ?? prey[0];
-
-            prey.Remove(meal);
+            var prey = occupants.Where(other => other != hunter && hunter.CanEat(other)).ToList();
             if (prey.Count == 0)
-                antelopesByCell.Remove(lion.Position);
+                continue;
 
-            world.Remove(meal);
-            lion.Heal(_options.LionHealthGainOnEat);
+            var meal = prey.Find(other => other.Id == plan.Action.targetId) ?? prey[0];
+
+            occupants.Remove(meal);
+            World.Remove(meal);
+            hunter.Heal(_options.HealthGainOnEat);
         }
     }
 

@@ -1,5 +1,6 @@
 ﻿using Savanna.Core.Configuration;
 using Savanna.Core.Constants;
+using Savanna.AnimalsBase.Models;
 using Savanna.Core.Models;
 
 namespace Savanna.Core.Services;
@@ -37,13 +38,6 @@ public class AnimalMovement(GameWorld world, GameOptions options)
     }
 
     // One animal per cell, lion is an exception
-    private bool IsBlocked(Animal animal, Position cell)
-    {
-        var occupied = _world.Animals.Where(other => other.Position == cell).ToList();
-
-        if (occupied.Count == 0)
-            return false;
-
-        return animal is not Lion || occupied.Any(static other => other is not Antelope);
-    }
+    private bool IsBlocked(Animal animal, Position cell) =>
+        _world.Animals.Any(other => other.Position == cell && other != animal && !animal.CanEat(other));
 }
