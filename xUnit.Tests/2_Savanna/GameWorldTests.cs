@@ -185,6 +185,34 @@ public class GameWorldTests
     }
 
     [Fact]
+    public void Remove_WhenAnimalWasNeverAdded_ShouldNotThrow()
+    {
+        // Arrange
+        GameWorld world = CreateWorld();
+        Animal antelope = CreateAntelope(new Position(1, 1));
+
+        // Act
+        Action act = () => world.Remove(antelope);
+
+        // Assert
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Snapshot_ShouldHaveSameSizeAsWorld()
+    {
+        // Arrange
+        GameWorld world = CreateWorld();
+
+        // Act
+        WorldSnapshot snapshot = world.Snapshot();
+
+        // Assert
+        snapshot.Width.Should().Be(world.Width);
+        snapshot.Height.Should().Be(world.Height);
+    }
+
+    [Fact]
     public void Snapshot_WhenAnimalMovesAfterwards_ShouldKeepOldPosition()
     {
         // Arrange
@@ -229,12 +257,12 @@ public class GameWorldTests
     // Initialize a lion at the given position
     private static Lion CreateLion(Position position)
     {
-        return new Lion(position, 5, 9, new LionBehavior(new Random()));
+        return new Lion(position, 5, 9, 20, new LionBehavior(new Random()));
     }
 
     // Initialize an antelope at the given position
     private static Antelope CreateAntelope(Position position)
     {
-        return new Antelope(position, 4, 7, new AntelopeBehavior(new Random()));
+        return new Antelope(position, 4, 7, 20, new AntelopeBehavior(new Random()));
     }
 }

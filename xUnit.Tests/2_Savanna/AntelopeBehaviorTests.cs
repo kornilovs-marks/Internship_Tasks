@@ -15,8 +15,9 @@ public class AntelopeBehaviorTests
         // Arrange
         int visionRange = 7;
         int expectedStepLength = 1;
+        double health = 10;
 
-        AnimalView antelope = CreateView(AnimalKind.Antelope, new Position(2, 2), visionRange);
+        AnimalView antelope = CreateView(AnimalKind.Antelope, new Position(2, 2), visionRange, health);
         WorldSnapshot world = CreateWorld(5, 5, antelope);
 
         var behavior = new AntelopeBehavior(new Random());
@@ -37,9 +38,10 @@ public class AntelopeBehaviorTests
         // Arrange
         int visionRange = 7;
         var expectedDirection = new Position(-1, 0);    // lion is to the right, so flee left
+        double health = 10;
 
-        AnimalView antelope = CreateView(AnimalKind.Antelope, new Position(5, 0), visionRange);
-        AnimalView lion = CreateView(AnimalKind.Lion, new Position(7, 0), visionRange);
+        AnimalView antelope = CreateView(AnimalKind.Antelope, new Position(5, 0), visionRange, health);
+        AnimalView lion = CreateView(AnimalKind.Lion, new Position(7, 0), visionRange, health);
         WorldSnapshot world = CreateWorld(10, 1, antelope, lion);
 
         var behavior = new AntelopeBehavior(new Random());
@@ -58,9 +60,10 @@ public class AntelopeBehaviorTests
         // Arrange
         int visionRange = 3;
         var towardLion = new Position(1, 0);
+        double health = 10;
 
-        AnimalView antelope = CreateView(AnimalKind.Antelope, new Position(2, 0), visionRange);
-        AnimalView lion = CreateView(AnimalKind.Lion, new Position(9, 0), visionRange);   // distance 7, outside vision
+        AnimalView antelope = CreateView(AnimalKind.Antelope, new Position(2, 0), visionRange, health);
+        AnimalView lion = CreateView(AnimalKind.Lion, new Position(9, 0), visionRange, health);   // distance 7, outside vision
         WorldSnapshot world = CreateWorld(10, 1, antelope, lion);
 
         var behavior = new AntelopeBehavior(new Random());
@@ -81,8 +84,8 @@ public class AntelopeBehaviorTests
     }
 
     // Initialize an animal view of the given kind at the given position
-    private static AnimalView CreateView(AnimalKind kind, Position position, int visionRange)
+    private static AnimalView CreateView(AnimalKind kind, Position position, int visionRange, double health)
     {
-        return new AnimalView(Guid.NewGuid(), kind, position, 4, visionRange);
+        return new AnimalView(Guid.NewGuid(), kind, position, 4, visionRange, health);
     }
 }

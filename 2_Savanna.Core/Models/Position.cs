@@ -2,6 +2,12 @@
 
 public readonly record struct Position(int x, int y)
 {
+    // The four one-cell steps an animal can take: up, right, down, left
+    public static IReadOnlyList<Position> Directions { get; } =
+    [
+        new(0, -1), new(1, 0), new(0, 1), new(-1, 0)
+    ];
+
     // Number of cells from (0, 0); a single step up, down, left or right has length 1
     public int Length => Math.Abs(x) + Math.Abs(y);
 

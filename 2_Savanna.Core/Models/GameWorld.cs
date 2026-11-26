@@ -43,4 +43,7 @@ public class GameWorld
     }
 
     public void Remove(Animal animal) => _animals.Remove(animal);
+
+    // Removes every animal that matches the rule, e.g. all dead animals
+    public void RemoveWhere(Predicate<Animal> match) => _animals.RemoveAll(match);
 }

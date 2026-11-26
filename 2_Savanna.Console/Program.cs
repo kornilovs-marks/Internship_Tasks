@@ -24,6 +24,8 @@ services.AddSingleton<AnimalFactoryBase, LionFactory>();
 services.AddSingleton<IAnimalFactory, AnimalFactory>();
 services.AddSingleton<GameWorld>();
 services.AddSingleton<GameEngine>();
+services.AddSingleton<AnimalMovement>();
+services.AddSingleton<AnimalBirth>();
 services.AddSingleton<ConsoleInputService>();
 services.AddSingleton<ConsoleRenderer>();
 
@@ -53,7 +55,7 @@ try
             switch (command.Type)
             {
                 case GameCommandType.AddAnimal:
-                    engine.TryAddAnimal(AnimalKind.Antelope);
+                    engine.TryAddAnimal(command.Kind!.Value);
                     renderer.Render(engine.World.Snapshot());
                     break;
                 case GameCommandType.Quit:

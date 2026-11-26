@@ -8,6 +8,7 @@ namespace xUnit.Tests.Savanna;
 public class LionBehaviorTests
 {
     private const int VisionRange = 9;
+    private const double Health = 10;
 
     [Fact]
     public void ChooseAction_WhenNoAntelopeInVision_ShouldWanderWithoutTarget()
@@ -101,6 +102,6 @@ public class LionBehaviorTests
     // Initialize an animal view of the given kind at the given position
     private static AnimalView CreateView(AnimalKind kind, Position position)
     {
-        return new AnimalView(Guid.NewGuid(), kind, position, 5, VisionRange);
+        return new AnimalView(Guid.NewGuid(), kind, position, 5, VisionRange, Health);
     }
 }
