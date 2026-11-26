@@ -31,7 +31,7 @@ public class BirthTracker
                 var first = animals[i];
                 var second = animals[j];
 
-                if (first.Kind != second.Kind || first.Position.DistanceTo(second.Position) > _range)
+                if (first.SpeciesId != second.SpeciesId|| first.Position.DistanceTo(second.Position) > _range)
                     continue;
 
                 var pair = AnimalPair.Of(first.Id, second.Id);

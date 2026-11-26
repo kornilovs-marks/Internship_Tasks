@@ -14,7 +14,7 @@ public class GameOptions
     public double AntelopeHealth { get; init; } = GameDefaults.AntelopeHealth;
     public double LionHealth { get; init; } = GameDefaults.LionHealth;
     public double MoveHealthCost { get; init; } = GameDefaults.MoveHealthCost;
-    public double LionHealthGainOnEat { get; init; } = GameDefaults.LionHealthGainOnEat;
+    public double HealthGainOnEat { get; init; } = GameDefaults.HealthGainOnEat;
     public int RoundMilliseconds { get; init; } = GameDefaults.RoundMilliseconds;
     public int BirthRoundsRequired { get; init; } = GameDefaults.BirthRoundsRequired;
     public int BirthRange { get; init; } = GameDefaults.BirthRange;
@@ -42,7 +42,7 @@ public class GameOptions
         if (!double.IsFinite(MoveHealthCost) || MoveHealthCost < 0)
             throw new ArgumentException("Move health cost cannot be negative", nameof(MoveHealthCost));
 
-        if (!double.IsFinite(LionHealthGainOnEat) || LionHealthGainOnEat < 0)
-            throw new ArgumentException("Health gained from eating cannot be negative", nameof(LionHealthGainOnEat));
+        if (!double.IsFinite(HealthGainOnEat) || HealthGainOnEat < 0)
+            throw new ArgumentException("Health gained from eating cannot be negative", nameof(HealthGainOnEat));
     }
 }

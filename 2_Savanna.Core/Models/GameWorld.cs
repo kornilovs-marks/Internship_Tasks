@@ -1,28 +1,31 @@
-﻿using Savanna.Core.Configuration;
+﻿using Savanna.AnimalsBase.Models;
+using Savanna.Core.Configuration;
+using Savanna.Core.Services;
 
 namespace Savanna.Core.Models;
 
 public class GameWorld
 {
     private List<Animal> _animals = [];
-
+    private SpeciesRegistry _species;
     public int Width { get; }
     public int Height { get; }
     internal IReadOnlyList<Animal> Animals => _animals;
 
     // Constructor that initializes the game world with specified options and validates them
-    public GameWorld(GameOptions options)
+    public GameWorld(GameOptions options, SpeciesRegistry species)
     {
         options.Validate();
         Width = options.FieldWidth;
         Height = options.FieldHeight;
+        _species = species;
     }
 
     // Checks if a given position is within the bounds of the grid
     public bool Contains(Position position) => position.x >= 0 && position.x < Width && position.y >= 0 && position.y < Height;
 
     // Creates a read-only copy of the current worl state
-    public WorldSnapshot Snapshot() => new(Width, Height, _animals.Select(animal => animal.ToView()));
+    public WorldSnapshot Snapshot() => new(Width, Height, _animals.Select(animal => animal.ToView()), _species);
 
     // Adds an animal to the game world
     public void Add(Animal animal)

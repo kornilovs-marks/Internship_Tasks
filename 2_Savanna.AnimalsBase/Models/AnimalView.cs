@@ -1,8 +1,8 @@
-﻿namespace Savanna.Core.Models;
+﻿namespace Savanna.AnimalsBase.Models;
 
 public record struct AnimalView(
     Guid Id,
-    AnimalKind Kind,
+    SpeciesId Species,
     Position Position,
     double Speed,
     int VisionRange,

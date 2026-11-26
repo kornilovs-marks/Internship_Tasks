@@ -1,9 +1,7 @@
-﻿
+﻿using Savanna.AnimalsBase.Interfaces;
+using Savanna.AnimalsBase.Models;
 
-using Savanna.Core.Interfaces;
-using Savanna.Core.Models;
-
-namespace Savanna.Core.Behaviors;
+namespace Savanna.AnimalsBase.Behaviors;
 
 public static class DirectionChoices
 {
@@ -11,7 +9,7 @@ public static class DirectionChoices
     public static Position Wander(Position origin, IWorldView world, Random random)
     {
         var choices = Position.Directions.Where(direction => world.Contains(origin + direction)).ToArray();
-        
+
         return choices.Length == 0 ? default : choices[random.Next(choices.Length)];
     }
 
@@ -19,22 +17,22 @@ public static class DirectionChoices
     public static Position TowardOrAway(Position origin, Position target, IWorldView world, Random random, bool away)
     {
         var choices = Position.Directions.Where(direction => world.Contains(origin + direction)).ToArray();
-        if(choices.Length == 0)
+        if (choices.Length == 0)
             return default;
 
         var bestDistance = away ? int.MinValue : int.MaxValue;
         var best = new List<Position>();
-        
-        foreach(var direction in choices)
+
+        foreach (var direction in choices)
         {
             var distance = (origin + direction).DistanceTo(target);
-            if((away && distance > bestDistance) ||(!away && distance < bestDistance))
+            if ((away && distance > bestDistance) || (!away && distance < bestDistance))
             {
                 bestDistance = distance;
                 best.Clear();
             }
 
-            if(distance == bestDistance)
+            if (distance == bestDistance)
                 best.Add(direction);
         }
 

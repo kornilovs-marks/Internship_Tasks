@@ -1,5 +1,6 @@
 ﻿using Savanna.Core.Configuration;
 using Savanna.Core.Interfaces;
+using Savanna.AnimalsBase.Models;
 using Savanna.Core.Models;
 
 namespace Savanna.Core.Services;
@@ -49,6 +50,6 @@ public class AnimalBirth(GameWorld world, IAnimalFactory factory, Random random,
             return;
 
         var position = freeCells[_random.Next(freeCells.Count)];
-        _world.Add(_factory.Create(first.Kind, position));
+        _world.Add(_factory.Create(first.SpeciesId, position));
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace Savanna.Core.Models;
+﻿namespace Savanna.AnimalsBase.Models;
 
 public readonly record struct Position(int x, int y)
 {

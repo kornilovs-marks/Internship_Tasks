@@ -1,4 +1,4 @@
-﻿namespace Savanna.Core.Models;
+﻿namespace Savanna.AnimalsBase.Models;
 
 public enum GameCommandType
 {
@@ -6,4 +6,4 @@ public enum GameCommandType
     Quit = 2
 }
 
-public readonly record struct GameCommand(GameCommandType Type, AnimalKind? Kind = null);
+public readonly record struct GameCommand(GameCommandType Type, SpeciesId? Species = null);
