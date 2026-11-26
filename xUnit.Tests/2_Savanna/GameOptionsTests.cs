@@ -17,12 +17,20 @@ public class GameOptionsTests
         options.FieldWidth.Should().Be(GameDefaults.FieldWidth);
         options.FieldHeight.Should().Be(GameDefaults.FieldHeight);
         options.TickMilliseconds.Should().Be(GameDefaults.TickMilliseconds);
+        options.RoundMilliseconds.Should().Be(GameDefaults.RoundMilliseconds);
 
         options.AntelopeSpeed.Should().Be(GameDefaults.AntelopeSpeed);
         options.AntelopeVision.Should().Be(GameDefaults.AntelopeVisionRange);
+        options.AntelopeHealth.Should().Be(GameDefaults.AntelopeHealth);
 
         options.LionSpeed.Should().Be(GameDefaults.LionSpeed);
         options.LionVision.Should().Be(GameDefaults.LionVisionRange);
+        options.LionHealth.Should().Be(GameDefaults.LionHealth);
+
+        options.BirthRange.Should().Be(GameDefaults.BirthRange);
+        options.BirthRoundsRequired.Should().Be(GameDefaults.BirthRoundsRequired);
+        options.HealthGainOnEat.Should().Be(GameDefaults.HealthGainOnEat);
+        options.MoveHealthCost.Should().Be(GameDefaults.MoveHealthCost);
     }
 
     [Fact]
@@ -42,20 +50,25 @@ public class GameOptionsTests
     public void Validate_WhenValuesAreSmallestAllowed_ShouldNotThrow()
     {
         // Arrange
-        int smallestSize = 1;
-        int smallestTick = 1;
-        int smallestVision = 1;
-        double smallestSpeed = double.Epsilon;
+        int smallestPositiveInt = 1;
+        double smallestPositiveDouble = double.Epsilon;
 
         var options = new GameOptions
         {
-            FieldWidth = smallestSize,
-            FieldHeight = smallestSize,
-            TickMilliseconds = smallestTick,
-            AntelopeSpeed = smallestSpeed,
-            AntelopeVision = smallestVision,
-            LionSpeed = smallestSpeed,
-            LionVision = smallestVision
+            FieldWidth = smallestPositiveInt,
+            FieldHeight = smallestPositiveInt,
+            TickMilliseconds = smallestPositiveInt,
+            RoundMilliseconds = smallestPositiveInt,
+            AntelopeSpeed = smallestPositiveDouble,
+            AntelopeVision = smallestPositiveInt,
+            AntelopeHealth = smallestPositiveDouble,
+            LionSpeed = smallestPositiveDouble,
+            LionVision = smallestPositiveInt,
+            LionHealth = smallestPositiveDouble,
+            BirthRoundsRequired = smallestPositiveInt,
+            BirthRange = 0,
+            MoveHealthCost = 0,
+            HealthGainOnEat = 0
         };
 
         // Act
@@ -102,6 +115,21 @@ public class GameOptionsTests
     {
         // Arrange
         var options = new GameOptions { TickMilliseconds = invalidTick };
+
+        // Act
+        Action act = () => options.Validate();
+
+        // Assert
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Validate_WhenRoundMillisecondsIsNotPositive_ShouldThrowArgumentException(int invalidRound)
+    {
+        // Arrange
+        var options = new GameOptions { RoundMilliseconds = invalidRound };
 
         // Act
         Action act = () => options.Validate();
@@ -164,6 +192,96 @@ public class GameOptionsTests
     {
         // Arrange
         var options = new GameOptions { LionVision = invalidVision };
+
+        // Act
+        Action act = () => options.Validate();
+
+        // Assert
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(double.NaN)]
+    public void Validate_WhenAntelopeHealthIsInvalid_ShouldThrowArgumentException(double invalidHealth)
+    {
+        // Arrange
+        var options = new GameOptions { AntelopeHealth = invalidHealth };
+
+        // Act
+        Action act = () => options.Validate();
+
+        // Assert
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(double.NaN)]
+    public void Validate_WhenLionHealthIsInvalid_ShouldThrowArgumentException(double invalidHealth)
+    {
+        // Arrange
+        var options = new GameOptions { LionHealth = invalidHealth };
+
+        // Act
+        Action act = () => options.Validate();
+
+        // Assert
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Validate_WhenBirthRoundsRequiredIsNotPositive_ShouldThrowArgumentException(int invalidRounds)
+    {
+        // Arrange
+        var options = new GameOptions { BirthRoundsRequired = invalidRounds };
+
+        // Act
+        Action act = () => options.Validate();
+
+        // Assert
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void Validate_WhenBirthRangeIsNegative_ShouldThrowArgumentException()
+    {
+        // Arrange
+        var options = new GameOptions { BirthRange = -1 };
+
+        // Act
+        Action act = () => options.Validate();
+
+        // Assert
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(double.NaN)]
+    public void Validate_WhenMoveHealthCostIsInvalid_ShouldThrowArgumentException(double invalidCost)
+    {
+        // Arrange
+        var options = new GameOptions { MoveHealthCost = invalidCost };
+
+        // Act
+        Action act = () => options.Validate();
+
+        // Assert
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(double.NaN)]
+    public void Validate_WhenHealthGainOnEatIsInvalid_ShouldThrowArgumentException(double invalidGain)
+    {
+        // Arrange
+        var options = new GameOptions { HealthGainOnEat = invalidGain };
 
         // Act
         Action act = () => options.Validate();

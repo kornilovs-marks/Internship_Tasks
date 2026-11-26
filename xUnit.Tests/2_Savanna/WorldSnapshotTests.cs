@@ -1,5 +1,9 @@
 ﻿using FluentAssertions;
+using Savanna.AnimalsBase.Factories;
+using Savanna.AnimalsBase.Models;
 using Savanna.Core.Models;
+using Savanna.Core.Services;
+using xUnit.Tests.Savanna.TestDoubles;
 
 namespace xUnit.Tests.Savanna;
 
@@ -74,15 +78,21 @@ public class WorldSnapshotTests
         result.Should().Be(expected);
     }
 
-    // Initialize a snapshot of the test field with the given animals
+    // Initialize a snapshot of the test field with the given animals; it knows the test species
     private static WorldSnapshot CreateSnapshot(params AnimalView[] animals)
     {
-        return new WorldSnapshot(Width, Height, animals);
+        AnimalFactoryBase[] factories =
+        [
+            new StubFactory(TestSpecies.Prey()),
+            new StubFactory(TestSpecies.Predator())
+        ];
+
+        return new WorldSnapshot(Width, Height, animals, new SpeciesRegistry(factories));
     }
 
-    // Initialize an antelope view at the given position with a unique id
+    // Initialize a prey view at the given position with a unique id
     private static AnimalView CreateView(Position position)
     {
-        return new AnimalView(Guid.NewGuid(), AnimalKind.Antelope, position, 4, 7, 10);
+        return new AnimalView(Guid.NewGuid(), TestSpecies.PreyId, position, 4, 7, 10);
     }
 }

@@ -1,94 +1,90 @@
 ﻿using FluentAssertions;
-using Savanna.Core.Configuration;
-using Savanna.Core.Factories;
+using Savanna.AnimalsBase.Factories;
+using Savanna.AnimalsBase.Models;
 using Savanna.Core.Models;
 using Savanna.Core.Services;
+using xUnit.Tests.Savanna.TestDoubles;
 
 namespace xUnit.Tests.Savanna;
 
 [Trait("Category", "Factories")]
 public class AnimalFactoryTests
 {
-    [Fact]
-    public void Create_WhenKindIsLion_ShouldReturnLionWithLionOptions()
+    [Theory]
+    [InlineData(Role.Prey)]
+    [InlineData(Role.Predator)]
+    public void Create_WhenSpeciesIsRegistered_ShouldBuildAnimalFromThatSpecies(Role role)
     {
         // Arrange
-        double lionSpeed = 6;
-        int lionVision = 11;
+        double speed = 6;
+        int vision = 11;
 
         var position = new Position(2, 3);
-        var options = new GameOptions { LionSpeed = lionSpeed, LionVision = lionVision };
+        SpeciesDescriptor species = TestSpecies.For(role, speed, vision);
 
-        AnimalFactory factory = CreateFactory(options);
+        AnimalFactory factory = CreateFactory(new StubFactory(species), new StubFactory(OtherRole(role)));
 
         // Act
-        Animal animal = factory.Create(AnimalKind.Lion, position);
+        Animal animal = factory.Create(species.Id, position);
 
         // Assert
-        animal.Should().BeOfType<Lion>();
-        animal.Kind.Should().Be(AnimalKind.Lion);
+        animal.Species.Should().BeSameAs(species);
+        animal.SpeciesId.Should().Be(TestSpecies.IdFor(role));
         animal.Position.Should().Be(position);
-        animal.Speed.Should().Be(lionSpeed);
-        animal.VisionRange.Should().Be(lionVision);
+        animal.Speed.Should().Be(speed);
+        animal.VisionRange.Should().Be(vision);
     }
 
     [Fact]
-    public void Create_WhenKindIsAntelope_ShouldReturnAntelopeWithAntelopeOptions()
+    public void Create_ShouldUseBehaviorFromSpeciesFactory()
     {
         // Arrange
-        double antelopeSpeed = 3;
-        int antelopeVision = 5;
-
-        var position = new Position(1, 4);
-        var options = new GameOptions { AntelopeSpeed = antelopeSpeed, AntelopeVision = antelopeVision };
-
-        AnimalFactory factory = CreateFactory(options);
+        AnimalFactory factory = CreateFactory(new StubFactory(TestSpecies.Prey()));
 
         // Act
-        Animal animal = factory.Create(AnimalKind.Antelope, position);
+        Animal animal = factory.Create(TestSpecies.PreyId, new Position(0, 0));
 
         // Assert
-        animal.Should().BeOfType<Antelope>();
-        animal.Kind.Should().Be(AnimalKind.Antelope);
-        animal.Position.Should().Be(position);
-        animal.Speed.Should().Be(antelopeSpeed);
-        animal.VisionRange.Should().Be(antelopeVision);
+        animal.Behavior.Should().BeOfType<StubBehavior>();
     }
 
     [Fact]
-    public void Create_WhenNoFactoryRegisteredForKind_ShouldThrowArgumentOutOfRangeException()
+    public void Create_WhenCalledTwice_ShouldGiveEachAnimalItsOwnBehavior()
     {
         // Arrange
-        var options = new GameOptions();
-        var random = new Random();
+        AnimalFactory factory = CreateFactory(new StubFactory(TestSpecies.Prey()));
+
+        // Act
+        Animal first = factory.Create(TestSpecies.PreyId, new Position(0, 0));
+        Animal second = factory.Create(TestSpecies.PreyId, new Position(1, 0));
+
+        // Assert
+        first.Behavior.Should().NotBeSameAs(second.Behavior);
+    }
+
+    [Fact]
+    public void Create_WhenNoFactoryRegisteredForSpecies_ShouldThrowArgumentOutOfRangeException()
+    {
+        // Arrange
         var position = new Position(0, 0);
-
-        var onlyAntelopes = new AnimalFactoryBase[]
-        {
-            new AntelopeFactory(options, random)
-        };
-
-        var factory = new AnimalFactory(onlyAntelopes);
+        AnimalFactory onlyPrey = CreateFactory(new StubFactory(TestSpecies.Prey()));
 
         // Act
-        Action act = () => factory.Create(AnimalKind.Lion, position);
+        Action act = () => onlyPrey.Create(TestSpecies.PredatorId, position);
 
         // Assert
         act.Should().Throw<ArgumentOutOfRangeException>();
     }
 
     [Fact]
-    public void Constructor_WhenTwoFactoriesHaveSameKind_ShouldThrowArgumentException()
+    public void Constructor_WhenTwoFactoriesHaveSameSpecies_ShouldThrowArgumentException()
     {
         // Arrange
-        var options = new GameOptions();
-        var random = new Random();
-
-        var duplicateFactories = new AnimalFactoryBase[]
-        {
-            new LionFactory(options, random),
-            new LionFactory(options, random)
-        };
+        AnimalFactoryBase[] duplicateFactories =
+        [
+            new StubFactory(TestSpecies.Predator()),
+            new StubFactory(TestSpecies.Predator())
+        ];
 
         // Act
         Action act = () => new AnimalFactory(duplicateFactories);
@@ -97,16 +93,13 @@ public class AnimalFactoryTests
         act.Should().Throw<ArgumentException>();
     }
 
-    // Initialize the selector with both real factories using the given options
-    private static AnimalFactory CreateFactory(GameOptions options)
+    // Initialize the engine's factory with the given species factories
+    private static AnimalFactory CreateFactory(params AnimalFactoryBase[] factories)
     {
-        var random = new Random();
-        var factories = new AnimalFactoryBase[]
-        {
-            new AntelopeFactory(options, random),
-            new LionFactory(options, random)
-        };
-
         return new AnimalFactory(factories);
     }
+
+    // The species for the other role, so every test registers both and the factory has to pick the right one
+    private static SpeciesDescriptor OtherRole(Role role) =>
+        role == Role.Predator ? TestSpecies.Prey() : TestSpecies.Predator();
 }

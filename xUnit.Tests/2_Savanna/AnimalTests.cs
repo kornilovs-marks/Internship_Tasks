@@ -1,6 +1,8 @@
 ﻿using FluentAssertions;
-using Savanna.Core.Behaviors;
+using Savanna.AnimalsBase.Interfaces;
+using Savanna.AnimalsBase.Models;
 using Savanna.Core.Models;
+using xUnit.Tests.Savanna.TestDoubles;
 
 namespace xUnit.Tests.Savanna;
 
@@ -12,9 +14,9 @@ public class AnimalTests
     private const double ValidHealth = 20;
 
     [Theory]
-    [InlineData(AnimalKind.Lion)]
-    [InlineData(AnimalKind.Antelope)]
-    public void Constructor_ShouldSetKindAndProperties(AnimalKind kind)
+    [InlineData(Role.Prey)]
+    [InlineData(Role.Predator)]
+    public void Constructor_ShouldSetSpeciesAndProperties(Role role)
     {
         // Arrange
         double speed = 4;
@@ -22,39 +24,38 @@ public class AnimalTests
         double health = 12;
 
         var position = new Position(3, 4);
+        SpeciesDescriptor species = TestSpecies.For(role, speed, visionRange, health);
+        IAnimalBehavior behavior = StubBehavior.StandStill();
 
         // Act
-        Animal animal = CreateAnimal(kind, position, speed, visionRange, health);
+        var animal = new Animal(species, position, behavior);
 
         // Assert
-        animal.Kind.Should().Be(kind);
+        animal.Species.Should().BeSameAs(species);
+        animal.SpeciesId.Should().Be(TestSpecies.IdFor(role));
         animal.Position.Should().Be(position);
         animal.Speed.Should().Be(speed);
         animal.VisionRange.Should().Be(visionRange);
         animal.Health.Should().Be(health);
-        animal.Behavior.Should().BeOfType(ExpectedBehaviorType(kind));
+        animal.Behavior.Should().BeSameAs(behavior);
     }
 
-    [Theory]
-    [InlineData(AnimalKind.Lion)]
-    [InlineData(AnimalKind.Antelope)]
-    public void Constructor_WhenCreatedTwice_ShouldAssignUniqueIds(AnimalKind kind)
+    [Fact]
+    public void Constructor_WhenCreatedTwice_ShouldAssignUniqueIds()
     {
         // Arrange / Act
-        Animal first = CreateAnimal(kind);
-        Animal second = CreateAnimal(kind);
+        Animal first = CreateAnimal(Role.Prey);
+        Animal second = CreateAnimal(Role.Prey);
 
         // Assert
         first.Id.Should().NotBe(second.Id);
     }
 
-    [Theory]
-    [InlineData(AnimalKind.Lion)]
-    [InlineData(AnimalKind.Antelope)]
-    public void Constructor_WhenCreated_ShouldStartAliveWithFullHealth(AnimalKind kind)
+    [Fact]
+    public void Constructor_WhenCreated_ShouldStartAliveWithFullHealth()
     {
         // Arrange / Act
-        Animal animal = CreateAnimal(kind);
+        Animal animal = CreateAnimal(Role.Prey);
 
         // Assert
         animal.Health.Should().Be(ValidHealth);
@@ -69,7 +70,7 @@ public class AnimalTests
     public void Constructor_WhenSpeedIsInvalid_ShouldThrowArgumentException(double invalidSpeed)
     {
         // Arrange / Act
-        Action act = () => CreateAnimal(AnimalKind.Lion, speed: invalidSpeed);
+        Action act = () => CreateAnimal(Role.Predator, speed: invalidSpeed);
 
         // Assert
         act.Should().Throw<ArgumentException>();
@@ -82,7 +83,7 @@ public class AnimalTests
     public void Constructor_WhenHealthIsInvalid_ShouldThrowArgumentException(double invalidHealth)
     {
         // Arrange / Act
-        Action act = () => CreateAnimal(AnimalKind.Lion, health: invalidHealth);
+        Action act = () => CreateAnimal(Role.Predator, health: invalidHealth);
 
         // Assert
         act.Should().Throw<ArgumentException>();
@@ -92,22 +93,40 @@ public class AnimalTests
     public void Constructor_WhenVisionRangeIsNegative_ShouldThrowArgumentException()
     {
         // Arrange / Act
-        Action act = () => CreateAnimal(AnimalKind.Antelope, visionRange: -1);
+        Action act = () => CreateAnimal(Role.Prey, visionRange: -1);
 
         // Assert
         act.Should().Throw<ArgumentException>();
     }
 
-    [Theory]
-    [InlineData(AnimalKind.Lion)]
-    [InlineData(AnimalKind.Antelope)]
-    public void LoseHealth_ShouldReduceHealthByAmount(AnimalKind kind)
+    [Fact]
+    public void Constructor_WhenSpeciesIsNull_ShouldThrowArgumentNullException()
+    {
+        // Arrange / Act
+        Action act = () => new Animal(null!, default, StubBehavior.StandStill());
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void Constructor_WhenBehaviorIsNull_ShouldThrowArgumentNullException()
+    {
+        // Arrange / Act
+        Action act = () => new Animal(TestSpecies.Prey(), default, null!);
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void LoseHealth_ShouldReduceHealthByAmount()
     {
         // Arrange
         double moveCost = 0.5;
         double expectedHealth = ValidHealth - moveCost;
 
-        Animal animal = CreateAnimal(kind);
+        Animal animal = CreateAnimal(Role.Prey);
 
         // Act
         animal.LoseHealth(moveCost);
@@ -117,15 +136,13 @@ public class AnimalTests
         animal.IsAlive.Should().BeTrue();
     }
 
-    [Theory]
-    [InlineData(AnimalKind.Lion)]
-    [InlineData(AnimalKind.Antelope)]
-    public void LoseHealth_WhenAmountIsMoreThanHealth_ShouldStopAtZeroAndDie(AnimalKind kind)
+    [Fact]
+    public void LoseHealth_WhenAmountIsMoreThanHealth_ShouldStopAtZeroAndDie()
     {
         // Arrange
         double expectedHealth = 0;
 
-        Animal animal = CreateAnimal(kind);
+        Animal animal = CreateAnimal(Role.Prey);
 
         // Act
         animal.LoseHealth(ValidHealth + 5);
@@ -134,6 +151,7 @@ public class AnimalTests
         animal.Health.Should().Be(expectedHealth);
         animal.IsAlive.Should().BeFalse();
     }
+
     [Fact]
     public void Heal_ShouldIncreaseHealthByAmount()
     {
@@ -142,14 +160,14 @@ public class AnimalTests
         double healing = 4;
         double expectedHealth = ValidHealth - damage + healing;
 
-        Animal lion = CreateAnimal(AnimalKind.Lion);
-        lion.LoseHealth(damage);
+        Animal predator = CreateAnimal(Role.Predator);
+        predator.LoseHealth(damage);
 
         // Act
-        lion.Heal(healing);
+        predator.Heal(healing);
 
         // Assert
-        lion.Health.Should().Be(expectedHealth);
+        predator.Health.Should().Be(expectedHealth);
     }
 
     [Fact]
@@ -159,21 +177,21 @@ public class AnimalTests
         double damage = 2;
         double healing = 10;
 
-        Animal lion = CreateAnimal(AnimalKind.Lion);
-        lion.LoseHealth(damage);
+        Animal predator = CreateAnimal(Role.Predator);
+        predator.LoseHealth(damage);
 
         // Act
-        lion.Heal(healing);
+        predator.Heal(healing);
 
         // Assert
-        lion.Health.Should().Be(lion.MaxHealth);
+        predator.Health.Should().Be(predator.MaxHealth);
     }
 
     [Fact]
     public void LoseHealth_WhenAmountIsNegative_ShouldThrowArgumentOutOfRangeException()
     {
         // Arrange
-        Animal animal = CreateAnimal(AnimalKind.Antelope);
+        Animal animal = CreateAnimal(Role.Prey);
 
         // Act
         Action act = () => animal.LoseHealth(-1);
@@ -186,7 +204,7 @@ public class AnimalTests
     public void Heal_WhenAmountIsNegative_ShouldThrowArgumentOutOfRangeException()
     {
         // Arrange
-        Animal animal = CreateAnimal(AnimalKind.Lion);
+        Animal animal = CreateAnimal(Role.Predator);
 
         // Act
         Action act = () => animal.Heal(-1);
@@ -195,20 +213,62 @@ public class AnimalTests
         act.Should().Throw<ArgumentOutOfRangeException>();
     }
 
-    [Theory]
-    [InlineData(AnimalKind.Lion)]
-    [InlineData(AnimalKind.Antelope)]
-    public void ToView_ShouldCopyCurrentValues(AnimalKind kind)
+    [Fact]
+    public void CanEat_WhenOtherIsInPreySet_ShouldReturnTrue()
     {
         // Arrange
-        Animal animal = CreateAnimal(kind);
+        Animal predator = CreateAnimal(Role.Predator);
+        Animal prey = CreateAnimal(Role.Prey);
+
+        // Act
+        bool canEat = predator.CanEat(prey);
+
+        // Assert
+        canEat.Should().BeTrue();
+    }
+
+    [Fact]
+    public void CanEat_WhenOtherIsNotInPreySet_ShouldReturnFalse()
+    {
+        // Arrange
+        Animal prey = CreateAnimal(Role.Prey);
+        Animal predator = CreateAnimal(Role.Predator);
+
+        // Act
+        bool canEat = prey.CanEat(predator);
+
+        // Assert
+        canEat.Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData(Role.Prey)]
+    [InlineData(Role.Predator)]
+    public void CanEat_WhenOtherIsSameSpecies_ShouldReturnFalse(Role role)
+    {
+        // Arrange
+        Animal first = CreateAnimal(role);
+        Animal second = CreateAnimal(role);
+
+        // Act
+        bool canEat = first.CanEat(second);
+
+        // Assert
+        canEat.Should().BeFalse();
+    }
+
+    [Fact]
+    public void ToView_ShouldCopyCurrentValues()
+    {
+        // Arrange
+        Animal animal = CreateAnimal(Role.Prey);
 
         // Act
         AnimalView view = animal.ToView();
 
         // Assert
         view.Id.Should().Be(animal.Id);
-        view.Kind.Should().Be(animal.Kind);
+        view.Species.Should().Be(animal.SpeciesId);
         view.Position.Should().Be(animal.Position);
         view.Speed.Should().Be(animal.Speed);
         view.VisionRange.Should().Be(animal.VisionRange);
@@ -223,7 +283,7 @@ public class AnimalTests
         var startPosition = new Position(2, 2);
         var newPosition = new Position(3, 2);
 
-        Animal animal = CreateAnimal(AnimalKind.Antelope, startPosition);
+        Animal animal = CreateAnimal(Role.Prey, startPosition);
         AnimalView viewBeforeMove = animal.ToView();
 
         // Act
@@ -238,25 +298,16 @@ public class AnimalTests
         viewAfterMove.Health.Should().Be(ValidHealth - moveCost);
     }
 
-    // Initialize an animal of the given kind; each test only passes the values it cares about
+    // Initialize an animal that plays the given role; each test only passes the values it cares about
     private static Animal CreateAnimal(
-        AnimalKind kind,
+        Role role,
         Position position = default,
         double speed = ValidSpeed,
         int visionRange = ValidVisionRange,
         double health = ValidHealth)
     {
-        var random = new Random();
+        SpeciesDescriptor species = TestSpecies.For(role, speed, visionRange, health);
 
-        return kind switch
-        {
-            AnimalKind.Lion => new Lion(position, speed, visionRange, health, new LionBehavior(random)),
-            AnimalKind.Antelope => new Antelope(position, speed, visionRange, health, new AntelopeBehavior(random)),
-            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "No test animal for this kind.")
-        };
+        return new Animal(species, position, StubBehavior.StandStill());
     }
-
-    // The behavior class each animal kind must be created with
-    private static Type ExpectedBehaviorType(AnimalKind kind) =>
-        kind == AnimalKind.Lion ? typeof(LionBehavior) : typeof(AntelopeBehavior);
 }

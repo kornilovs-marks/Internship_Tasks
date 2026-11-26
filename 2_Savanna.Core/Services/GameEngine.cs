@@ -55,7 +55,7 @@ public class GameEngine(GameWorld world, IAnimalFactory factory, Random random, 
         {
             var hunter = plan.Animal;
 
-            if (!animalsByCell.TryGetValue(hunter.Position, out var occupants) || occupants.Contains(hunter))
+            if (!animalsByCell.TryGetValue(hunter.Position, out var occupants) || !occupants.Contains(hunter))
                 continue;
 
             var prey = occupants.Where(other => other != hunter && hunter.CanEat(other)).ToList();
